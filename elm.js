@@ -8594,17 +8594,11 @@ var $author$project$Main$viewMainContent = function (model) {
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$class('section-grid'),
-						A2($elm$html$Html$Attributes$style, 'display', 'grid'),
-						A2($elm$html$Html$Attributes$style, 'grid-template-columns', '1fr 1fr'),
-						A2($elm$html$Html$Attributes$style, 'gap', '20px'),
-						A2($elm$html$Html$Attributes$style, 'align-items', 'start'),
 						A2($elm$html$Html$Attributes$style, 'margin-bottom', '48px')
 					]),
 				_List_fromArray(
 					[
-						getCard(3),
-						A4($author$project$Main$viewAsepritePanel, 'doggo.png', 'doggo.png', 64, 64)
+						getCard(3)
 					])),
 				$author$project$Main$viewSectionDivider('PROJECTS'),
 				A2(
@@ -8640,11 +8634,15 @@ var $author$project$Main$viewMainContent = function (model) {
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						A2($elm$html$Html$Attributes$style, 'max-width', '700px'),
-						A2($elm$html$Html$Attributes$style, 'margin', '0 auto')
+						$elm$html$Html$Attributes$class('section-grid'),
+						A2($elm$html$Html$Attributes$style, 'display', 'grid'),
+						A2($elm$html$Html$Attributes$style, 'grid-template-columns', '1fr 1fr'),
+						A2($elm$html$Html$Attributes$style, 'gap', '20px'),
+						A2($elm$html$Html$Attributes$style, 'align-items', 'start')
 					]),
 				_List_fromArray(
 					[
+						A4($author$project$Main$viewAsepritePanel, 'doggo.png', 'doggo.png', 64, 64),
 						A4($author$project$Main$viewAsepritePanel, 'quacky.png', 'quacky.png', 64, 64)
 					]))
 			]));
@@ -8895,6 +8893,7 @@ var $author$project$Starfield$viewFerris = F2(
 	function (time, ferris) {
 		var spin = $elm$core$Basics$sin((time / 30000) + (ferris.seed * 1.3)) * 15;
 		var s = ferris.size;
+		var sw = s * 1.5;
 		var finalRotation = ferris.rotation + spin;
 		var driftY = $elm$core$Basics$sin((time / 18000) + (ferris.seed * 0.7)) * 4;
 		var driftX = $elm$core$Basics$cos((time / 15000) + ferris.seed) * 3;
@@ -8906,7 +8905,7 @@ var $author$project$Starfield$viewFerris = F2(
 					A2(
 					$elm$html$Html$Attributes$style,
 					'left',
-					'calc(' + ($elm$core$String$fromFloat(ferris.x + driftX) + ('% - ' + ($elm$core$String$fromFloat(s / 2) + 'px)')))),
+					'calc(' + ($elm$core$String$fromFloat(ferris.x + driftX) + ('% - ' + ($elm$core$String$fromFloat(sw / 2) + 'px)')))),
 					A2(
 					$elm$html$Html$Attributes$style,
 					'top',
@@ -8914,7 +8913,7 @@ var $author$project$Starfield$viewFerris = F2(
 					A2(
 					$elm$html$Html$Attributes$style,
 					'width',
-					$elm$core$String$fromFloat(s) + 'px'),
+					$elm$core$String$fromFloat(sw) + 'px'),
 					A2(
 					$elm$html$Html$Attributes$style,
 					'height',
@@ -8934,12 +8933,11 @@ var $author$project$Starfield$viewFerris = F2(
 					$elm$svg$Svg$svg,
 					_List_fromArray(
 						[
-							$elm$svg$Svg$Attributes$viewBox('0 0 120 100'),
+							$elm$svg$Svg$Attributes$viewBox('0 0 1200 800'),
 							$elm$svg$Svg$Attributes$width(
-							$elm$core$String$fromFloat(s)),
+							$elm$core$String$fromFloat(sw)),
 							$elm$svg$Svg$Attributes$height(
-							$elm$core$String$fromFloat((s * 100) / 120)),
-							$elm$svg$Svg$Attributes$fill('none')
+							$elm$core$String$fromFloat(s))
 						]),
 					_List_fromArray(
 						[
@@ -8947,147 +8945,131 @@ var $author$project$Starfield$viewFerris = F2(
 							$elm$svg$Svg$ellipse,
 							_List_fromArray(
 								[
-									$elm$svg$Svg$Attributes$cx('60'),
-									$elm$svg$Svg$Attributes$cy('38'),
-									$elm$svg$Svg$Attributes$rx('28'),
-									$elm$svg$Svg$Attributes$ry('26'),
-									$elm$svg$Svg$Attributes$fill('rgba(168,85,247,0.15)'),
-									$elm$svg$Svg$Attributes$stroke('rgba(168,85,247,0.5)'),
-									$elm$svg$Svg$Attributes$strokeWidth('1.5')
+									$elm$svg$Svg$Attributes$cx('600'),
+									$elm$svg$Svg$Attributes$cy('420'),
+									$elm$svg$Svg$Attributes$rx('380'),
+									$elm$svg$Svg$Attributes$ry('340'),
+									$elm$svg$Svg$Attributes$fill('rgba(168,85,247,0.06)'),
+									$elm$svg$Svg$Attributes$stroke('rgba(168,85,247,0.35)'),
+									$elm$svg$Svg$Attributes$strokeWidth('4')
 								]),
 							_List_Nil),
 							A2(
 							$elm$svg$Svg$path,
 							_List_fromArray(
 								[
-									$elm$svg$Svg$Attributes$d('M42 28 Q52 18 68 22'),
-									$elm$svg$Svg$Attributes$stroke('rgba(200,180,255,0.4)'),
-									$elm$svg$Svg$Attributes$strokeWidth('1'),
+									$elm$svg$Svg$Attributes$d('M340 220 Q460 120 720 180'),
+									$elm$svg$Svg$Attributes$stroke('rgba(200,180,255,0.25)'),
+									$elm$svg$Svg$Attributes$strokeWidth('3'),
 									$elm$svg$Svg$Attributes$fill('none')
+								]),
+							_List_Nil),
+							A2(
+							$elm$svg$Svg$path,
+							_List_fromArray(
+								[
+									$elm$svg$Svg$Attributes$d('M597.344,357.461 C476.106,357.461 365.954,372.037 284.405,395.79 L284.405,598.691 C365.954,622.445 476.106,637.02 597.344,637.02 C736.104,637.02 860.331,617.928 943.775,587.834 L943.775,406.65 C860.331,376.555 736.104,357.461 597.344,357.461'),
+									$elm$svg$Svg$Attributes$fill('rgb(165,43,0)')
+								]),
+							_List_Nil),
+							A2(
+							$elm$svg$Svg$path,
+							_List_fromArray(
+								[
+									$elm$svg$Svg$Attributes$d('M1068.75,522.322 L1054.539,492.881 C1054.612,491.763 1054.67,490.644 1054.67,489.521 C1054.67,456.146 1019.964,425.386 961.573,400.759 L961.573,578.285 C988.818,566.793 1010.921,553.968 1026.729,540.16 C1022.077,558.867 1006.165,596.713 993.479,623.328 C972.629,661.394 965.079,694.531 966.047,696.172 C966.664,697.205 973.777,686.232 984.266,668.451 C1008.676,633.67 1054.93,567.269 1064.175,550.355 C1074.647,531.181 1068.75,522.322 1068.75,522.322'),
+									$elm$svg$Svg$Attributes$fill('rgb(165,43,0)')
+								]),
+							_List_Nil),
+							A2(
+							$elm$svg$Svg$path,
+							_List_fromArray(
+								[
+									$elm$svg$Svg$Attributes$d('M149.064,491.467 C149.064,497.895 150.357,504.227 152.852,510.436 L144.341,525.586 C144.341,525.586 137.523,534.432 149.529,553.094 C160.119,569.549 213.164,633.961 241.161,667.692 C253.187,684.985 261.34,695.637 262.054,694.608 C263.178,692.975 254.578,660.508 230.695,623.467 C219.551,603.572 206.241,577.215 198.253,557.746 C220.556,571.862 249.736,584.666 284.405,595.686 L284.405,387.251 C200.861,413.799 149.064,450.684 149.064,491.467'),
+									$elm$svg$Svg$Attributes$fill('rgb(165,43,0)')
+								]),
+							_List_Nil),
+							A2(
+							$elm$svg$Svg$path,
+							_List_fromArray(
+								[
+									$elm$svg$Svg$Attributes$d('M1151.27,522.156 L1057.855,453.345 C1056.975,450.281 1056.099,447.218 1055.193,444.183 L1085.876,399.732 C1089.006,395.21 1089.641,389.334 1087.607,384.177 C1085.57,379.047 1081.116,375.367 1075.844,374.467 L1023.96,365.662 C1021.952,361.56 1019.844,357.52 1017.73,353.512 L1039.527,303.609 C1041.77,298.522 1041.296,292.614 1038.324,288.001 C1035.363,283.365 1030.334,280.657 1024.975,280.868 L972.319,282.781 C969.592,279.231 966.823,275.713 963.998,272.26 L976.098,218.77 C977.323,213.337 975.776,207.652 971.995,203.706 C968.233,199.774 962.766,198.147 957.569,199.423 L906.28,212.031 C902.959,209.096 899.582,206.198 896.166,203.358 L898.014,148.444 C898.212,142.885 895.621,137.602 891.17,134.519 C886.724,131.415 881.077,130.946 876.214,133.253 L828.367,156.0 C824.513,153.79 820.639,152.0 816.723,149.883 L808.268,95.368 C807.411,89.885 803.883,85.229 798.942,83.102 C794.019,80.965 788.374,81.655 784.051,84.91 L741.392,116.917 C737.192,118.312 732.973,119.649 728.7,120.928 L710.314,61.59 C708.444,56.361 704.133,52.519 698.876,51.439 C693.637,50.367 688.246,52.181 684.613,56.241 L648.707,96.412 C644.364,96.912 640.021,97.356 635.664,97.731 L607.94,48.368 C605.13,43.636 600.17,40.756 594.824,40.756 C589.49,40.756 584.52,43.636 581.734,48.368 L554.001,97.731 C549.643,97.356 545.279,96.912 540.945,96.412 L505.035,56.241 C501.399,52.181 495.988,50.367 490.767,51.439 C485.512,52.531 481.194,56.361 479.334,61.59 L460.932,120.928 C456.672,119.649 452.451,118.533 448.241,116.917 L405.597,84.91 C401.261,81.644 395.617,80.955 390.681,83.102 C385.762,85.229 382.22,89.885 381.368,95.368 L372.907,149.883 C368.993,152.0 365.118,153.777 361.254,156.0 L313.412,133.253 C308.554,130.937 302.883,131.415 298.458,134.519 C294.013,137.602 291.416,142.885 291.618,148.444 L293.453,203.358 C290.048,206.198 286.679,209.096 283.341,212.031 L232.062,199.423 C226.852,198.158 221.392,199.774 217.621,203.706 C213.826,207.652 212.29,213.337 213.508,218.77 L225.587,272.26 C222.785,275.727 220.012,279.231 217.294,282.781 L164.639,280.868 C159.325,280.711 154.253,283.365 151.283,288.001 C148.31,292.614 147.86,298.522 150.07,303.609 L171.886,353.512 C169.767,357.52 167.662,361.56 165.637,365.662 L113.75,374.467 C108.48,375.355 104.04,379.033 101.993,384.177 C99.948,389.334 100.618,395.21 103.718,399.732 L134.418,444.183 C134.178,444.967 133.958,445.76 133.718,446.547 L46.948,538.717 C46.948,538.717 33.658,549.14 53.018,573.633 C70.088,595.238 157.744,680.885 204.038,725.756 C223.592,748.535 236.986,762.642 238.387,761.422 C240.595,759.482 229.0,718.037 190.485,669.41 C160.8,625.781 122.27,558.677 131.31,550.943 C131.31,550.943 141.58,537.898 162.203,528.508 C162.956,529.111 161.422,527.91 162.203,528.508 C162.203,528.508 597.355,729.24 1001.0,531.904 C1047.108,523.631 1075.023,548.334 1075.023,548.334 C1084.651,553.914 1059.722,622.912 1039.225,668.588 C1011.344,720.451 1007.255,760.92 1009.621,762.324 C1011.112,763.213 1021.255,747.779 1035.725,723.215 C1071.427,673.467 1138.916,578.629 1151.27,555.595 C1165.276,529.476 1151.27,522.156 1151.27,522.156'),
+									$elm$svg$Svg$Attributes$fill('rgb(247,76,0)')
+								]),
+							_List_Nil),
+							A2(
+							$elm$svg$Svg$path,
+							_List_fromArray(
+								[
+									$elm$svg$Svg$Attributes$d('M450.328,650.959 C448.664,649.539 447.792,648.697 447.792,648.697 L590.334,637.02 C474.061,483.629 381.91,605.822 370.995,619.484 L370.995,650.959 Z'),
+									$elm$svg$Svg$Attributes$fill('black')
+								]),
+							_List_Nil),
+							A2(
+							$elm$svg$Svg$path,
+							_List_fromArray(
+								[
+									$elm$svg$Svg$Attributes$d('M747.12,649.307 C748.783,647.887 749.656,647.043 749.656,647.043 L612.672,637.02 C729.0,477.333 816.541,604.168 826.455,617.83 L826.455,649.307 Z'),
+									$elm$svg$Svg$Attributes$fill('black')
 								]),
 							_List_Nil),
 							A2(
 							$elm$svg$Svg$ellipse,
 							_List_fromArray(
 								[
-									$elm$svg$Svg$Attributes$cx('60'),
-									$elm$svg$Svg$Attributes$cy('58'),
-									$elm$svg$Svg$Attributes$rx('32'),
-									$elm$svg$Svg$Attributes$ry('20'),
-									$elm$svg$Svg$Attributes$fill('rgba(220,80,50,0.85)'),
-									$elm$svg$Svg$Attributes$stroke('rgba(220,80,50,0.5)'),
-									$elm$svg$Svg$Attributes$strokeWidth('1')
+									$elm$svg$Svg$Attributes$cx('495.593'),
+									$elm$svg$Svg$Attributes$cy('436.428'),
+									$elm$svg$Svg$Attributes$rx('25.173'),
+									$elm$svg$Svg$Attributes$ry('34.627'),
+									$elm$svg$Svg$Attributes$fill('white')
+								]),
+							_List_Nil),
+							A2(
+							$elm$svg$Svg$ellipse,
+							_List_fromArray(
+								[
+									$elm$svg$Svg$Attributes$cx('703.33'),
+									$elm$svg$Svg$Attributes$cy('435.209'),
+									$elm$svg$Svg$Attributes$rx('24.408'),
+									$elm$svg$Svg$Attributes$ry('33.574'),
+									$elm$svg$Svg$Attributes$fill('white')
 								]),
 							_List_Nil),
 							A2(
 							$elm$svg$Svg$path,
 							_List_fromArray(
 								[
-									$elm$svg$Svg$Attributes$d('M44 50 Q52 42 60 50 Q68 42 76 50'),
-									$elm$svg$Svg$Attributes$stroke('rgba(180,60,40,0.6)'),
-									$elm$svg$Svg$Attributes$strokeWidth('0.8'),
-									$elm$svg$Svg$Attributes$fill('none')
-								]),
-							_List_Nil),
-							A2(
-							$elm$svg$Svg$circle,
-							_List_fromArray(
-								[
-									$elm$svg$Svg$Attributes$cx('50'),
-									$elm$svg$Svg$Attributes$cy('40'),
-									$elm$svg$Svg$Attributes$r('3'),
-									$elm$svg$Svg$Attributes$fill('rgba(240,240,255,0.9)')
-								]),
-							_List_Nil),
-							A2(
-							$elm$svg$Svg$circle,
-							_List_fromArray(
-								[
-									$elm$svg$Svg$Attributes$cx('70'),
-									$elm$svg$Svg$Attributes$cy('40'),
-									$elm$svg$Svg$Attributes$r('3'),
-									$elm$svg$Svg$Attributes$fill('rgba(240,240,255,0.9)')
-								]),
-							_List_Nil),
-							A2(
-							$elm$svg$Svg$circle,
-							_List_fromArray(
-								[
-									$elm$svg$Svg$Attributes$cx('51'),
-									$elm$svg$Svg$Attributes$cy('40'),
-									$elm$svg$Svg$Attributes$r('1.5'),
-									$elm$svg$Svg$Attributes$fill('rgba(20,20,30,0.9)')
-								]),
-							_List_Nil),
-							A2(
-							$elm$svg$Svg$circle,
-							_List_fromArray(
-								[
-									$elm$svg$Svg$Attributes$cx('71'),
-									$elm$svg$Svg$Attributes$cy('40'),
-									$elm$svg$Svg$Attributes$r('1.5'),
-									$elm$svg$Svg$Attributes$fill('rgba(20,20,30,0.9)')
+									$elm$svg$Svg$Attributes$d('M441.397,662.533 C533.23,650.957 586.301,649.879 586.301,649.879 C463.434,487.895 363.736,634.535 363.736,634.535 C338.754,625.603 313.283,590.922 294.259,558.945 L218.022,536.365 C305.895,685.506 371.317,687.779 371.317,687.779 C507.531,862.369 572.06,722.074 572.06,722.074 C495.592,713.392 441.397,662.533 441.397,662.533'),
+									$elm$svg$Svg$Attributes$fill('rgb(247,76,0)')
 								]),
 							_List_Nil),
 							A2(
 							$elm$svg$Svg$path,
 							_List_fromArray(
 								[
-									$elm$svg$Svg$Attributes$d('M28 58 L18 50 L14 56 L22 60 Z'),
-									$elm$svg$Svg$Attributes$fill('rgba(220,80,50,0.75)'),
-									$elm$svg$Svg$Attributes$stroke('rgba(220,80,50,0.5)'),
-									$elm$svg$Svg$Attributes$strokeWidth('0.8')
-								]),
-							_List_Nil),
-							A2(
-							$elm$svg$Svg$path,
-							_List_fromArray(
-								[
-									$elm$svg$Svg$Attributes$d('M92 58 L102 50 L106 56 L98 60 Z'),
-									$elm$svg$Svg$Attributes$fill('rgba(220,80,50,0.75)'),
-									$elm$svg$Svg$Attributes$stroke('rgba(220,80,50,0.5)'),
-									$elm$svg$Svg$Attributes$strokeWidth('0.8')
-								]),
-							_List_Nil),
-							A2(
-							$elm$svg$Svg$path,
-							_List_fromArray(
-								[
-									$elm$svg$Svg$Attributes$d('M38 70 L28 82 M44 72 L36 86 M50 73 L44 88'),
-									$elm$svg$Svg$Attributes$stroke('rgba(220,80,50,0.6)'),
-									$elm$svg$Svg$Attributes$strokeWidth('1.2'),
-									$elm$svg$Svg$Attributes$strokeLinecap('round')
-								]),
-							_List_Nil),
-							A2(
-							$elm$svg$Svg$path,
-							_List_fromArray(
-								[
-									$elm$svg$Svg$Attributes$d('M82 70 L92 82 M76 72 L84 86 M70 73 L76 88'),
-									$elm$svg$Svg$Attributes$stroke('rgba(220,80,50,0.6)'),
-									$elm$svg$Svg$Attributes$strokeWidth('1.2'),
-									$elm$svg$Svg$Attributes$strokeLinecap('round')
+									$elm$svg$Svg$Attributes$d('M966.094,497.02 C966.094,497.02 950.518,559.061 853.641,624.258 L826.475,630.625 C826.475,630.625 738.594,470.366 614.092,650.959 C614.092,650.959 652.894,628.368 756.914,655.879 C756.914,655.879 709.064,729.118 612.672,726.868 C612.672,726.868 705.045,837.688 845.612,677.616 C845.612,677.616 994.207,620.153 1006.258,497.02 L966.094,497.02'),
+									$elm$svg$Svg$Attributes$fill('rgb(247,76,0)')
 								]),
 							_List_Nil),
 							A2(
 							$elm$svg$Svg$line,
 							_List_fromArray(
 								[
-									$elm$svg$Svg$Attributes$x1('72'),
-									$elm$svg$Svg$Attributes$y1('14'),
-									$elm$svg$Svg$Attributes$x2('78'),
-									$elm$svg$Svg$Attributes$y2('4'),
+									$elm$svg$Svg$Attributes$x1('780'),
+									$elm$svg$Svg$Attributes$y1('140'),
+									$elm$svg$Svg$Attributes$x2('820'),
+									$elm$svg$Svg$Attributes$y2('60'),
 									$elm$svg$Svg$Attributes$stroke('rgba(168,85,247,0.5)'),
-									$elm$svg$Svg$Attributes$strokeWidth('1.2')
+									$elm$svg$Svg$Attributes$strokeWidth('5'),
+									$elm$svg$Svg$Attributes$strokeLinecap('round')
 								]),
 							_List_Nil),
 							A2(
 							$elm$svg$Svg$circle,
 							_List_fromArray(
 								[
-									$elm$svg$Svg$Attributes$cx('78'),
-									$elm$svg$Svg$Attributes$cy('3'),
-									$elm$svg$Svg$Attributes$r('2.5'),
+									$elm$svg$Svg$Attributes$cx('820'),
+									$elm$svg$Svg$Attributes$cy('50'),
+									$elm$svg$Svg$Attributes$r('14'),
 									$elm$svg$Svg$Attributes$fill('rgba(168,85,247,0.4)')
 								]),
 							_List_Nil)

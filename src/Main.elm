@@ -643,18 +643,12 @@ viewMainContent model =
                 ]
             ]
 
-        -- Section: Education + Art
+        -- Section: Education (full width)
         , viewSectionDivider "EDUCATION"
         , div
-            [ class "section-grid"
-            , style "display" "grid"
-            , style "grid-template-columns" "1fr 1fr"
-            , style "gap" "20px"
-            , style "align-items" "start"
-            , style "margin-bottom" "48px"
+            [ style "margin-bottom" "48px"
             ]
             [ getCard 3
-            , viewAsepritePanel "doggo.png" "doggo.png" 64 64
             ]
 
         -- Section: Projects
@@ -677,10 +671,14 @@ viewMainContent model =
         -- Gallery
         , viewSectionDivider "GALLERY"
         , div
-            [ style "max-width" "700px"
-            , style "margin" "0 auto"
+            [ class "section-grid"
+            , style "display" "grid"
+            , style "grid-template-columns" "1fr 1fr"
+            , style "gap" "20px"
+            , style "align-items" "start"
             ]
-            [ viewAsepritePanel "quacky.png" "quacky.png" 64 64
+            [ viewAsepritePanel "doggo.png" "doggo.png" 64 64
+            , viewAsepritePanel "quacky.png" "quacky.png" 64 64
             ]
         ]
 
