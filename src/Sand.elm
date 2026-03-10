@@ -43,7 +43,7 @@ viewSandPanelInner _ =
             [ div
                 [ style "font-family" "'Space Mono', monospace"
                 , style "font-size" "10px"
-                , style "color" "rgba(168,85,247,0.5)"
+                , style "color" "rgba(168,85,247,0.7)"
                 , style "letter-spacing" "0.1em"
                 ]
                 [ text "SAND.EXE" ]
@@ -70,14 +70,19 @@ viewSandPanelInner _ =
             []
         , -- Bottom bar
           div
-            [ style "padding" "8px 12px"
+            [ id "sand-bottom-bar"
+            , style "display" "flex"
+            , style "align-items" "center"
+            , style "justify-content" "space-between"
+            , style "padding" "8px 12px"
             , style "background" "rgba(168,85,247,0.02)"
             , style "border" "1px solid rgba(168,85,247,0.06)"
             , style "border-top" "none"
             , style "font-family" "'Space Mono', monospace"
             , style "font-size" "9px"
-            , style "color" "rgba(168,85,247,0.25)"
+            , style "color" "rgba(168,85,247,0.45)"
             , style "letter-spacing" "0.05em"
             ]
-            [ text "R to reset" ]
+            [ text "R to reset"
+            ]
         ]

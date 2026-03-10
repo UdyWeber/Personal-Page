@@ -308,10 +308,10 @@ injectStyles =
             , ".card-link:hover .card-arrow { opacity: 1 !important; transform: translateX(4px) !important; }"
             , ".card-link:hover .card-scan { opacity: 1 !important; animation: scanline 1.5s linear infinite !important; }"
             , ""
-            , ".footer-link { color: rgba(168,85,247,0.4); text-decoration: none; transition: color 0.2s; font-family: 'Space Mono', monospace; font-size: 12px; letter-spacing: 0.05em; }"
+            , ".footer-link { color: rgba(168,85,247,0.6); text-decoration: none; transition: color 0.2s; font-family: 'Space Mono', monospace; font-size: 12px; letter-spacing: 0.05em; }"
             , ".footer-link:hover { color: rgba(168,85,247,0.8); }"
             , ""
-            , ".social-link { color: rgba(168,85,247,0.35); text-decoration: none; transition: color 0.3s ease, text-shadow 0.3s ease; }"
+            , ".social-link { color: rgba(168,85,247,0.55); text-decoration: none; transition: color 0.3s ease, text-shadow 0.3s ease; }"
             , ".social-link:hover { color: rgba(168,85,247,0.9); text-shadow: 0 0 12px rgba(168,85,247,0.3); }"
             , ""
             , "@media (max-width: 900px) {"
@@ -402,7 +402,7 @@ viewHero =
             [ div
                 [ style "font-family" "'Space Mono', monospace"
                 , style "font-size" "13px"
-                , style "color" "rgba(168,85,247,0.4)"
+                , style "color" "rgba(168,85,247,0.6)"
                 , style "letter-spacing" "0.15em"
                 , style "margin-bottom" "32px"
                 , style "animation" "fadeIn 1s ease 0.3s both"
@@ -452,7 +452,7 @@ viewHero =
                 , div
                     [ style "font-family" "'Space Mono', monospace"
                     , style "font-size" "14px"
-                    , style "color" "rgba(168,85,247,0.5)"
+                    , style "color" "rgba(168,85,247,0.7)"
                     , style "letter-spacing" "0.3em"
                     ]
                     [ text "JOAO ARTHUR WEBER" ]
@@ -469,13 +469,13 @@ viewHero =
                 [ style "max-width" "540px"
                 , style "margin" "24px auto 0"
                 , style "font-size" "15px"
-                , style "color" "rgba(196,195,200,0.4)"
+                , style "color" "rgba(196,195,200,0.8)"
                 , style "line-height" "1.7"
                 , style "text-align" "center"
                 , style "letter-spacing" "0.01em"
                 , style "animation" "fadeIn 1s ease 1.0s both"
                 ]
-                [ text "Software developer, enamoured with learning programming languages and weird tech, with an estrange appeal for distributed systems and Rust — always enhancing my craft and looking for problems to solve. When I'm not buried in code, you'll find me drawing pixel art (with far more enthusiasm than skill), singing my heart out to whatever song is stuck in my head, or diving into some obscure technology rabbit hole just because it looked interesting. I believe the best way to learn is to build things that probably shouldn't exist." ]
+                [ text "Software developer, enamoured with learning programming languages and weird tech, with an estrange appeal for distributed systems and Rust — always enhancing my craft and looking for problems to solve. When I'm not buried in code (on neovim btw), you'll find me drawing pixel art (with far more enthusiasm than skill), singing my heart out to whatever song is stuck in my head, or diving into some obscure technology rabbit hole just because it looked interesting. I believe the best way to learn is to build things that probably shouldn't exist." ]
             , div
                 [ style "display" "flex"
                 , style "align-items" "center"
@@ -492,7 +492,7 @@ viewHero =
                 [ style "margin-top" "48px"
                 , style "font-family" "'Space Mono', monospace"
                 , style "font-size" "12px"
-                , style "color" "rgba(168,85,247,0.2)"
+                , style "color" "rgba(168,85,247,0.4)"
                 , style "letter-spacing" "0.2em"
                 , style "animation" "fadeIn 1s ease 1.4s both, drift 3s ease infinite 2s"
                 ]
@@ -552,7 +552,7 @@ viewMarquee =
             , style "font-family" "'Space Mono', monospace"
             , style "font-size" "12px"
             , style "letter-spacing" "0.2em"
-            , style "color" "rgba(168,85,247,0.5)"
+            , style "color" "rgba(168,85,247,0.7)"
             , style "text-transform" "uppercase"
             ]
             [ text "python  //  sql  //  rust  //  java  //  scala  //  golang  //  c++  //  c  //  elixir  //  lua  //  bash  //  docker  //  neovim  //  git  //  unix  //  spark  //  datafusion  //  python  //  sql  //  rust  //  java" ]
@@ -585,7 +585,7 @@ viewMainContent model =
             [ div
                 [ style "font-family" "'Space Mono', monospace"
                 , style "font-size" "12px"
-                , style "color" "rgba(168,85,247,0.35)"
+                , style "color" "rgba(168,85,247,0.55)"
                 , style "letter-spacing" "0.15em"
                 , style "margin-bottom" "12px"
                 ]
@@ -607,7 +607,7 @@ viewMainContent model =
                 , div
                     [ style "font-family" "'Space Mono', monospace"
                     , style "font-size" "12px"
-                    , style "color" "rgba(168,85,247,0.25)"
+                    , style "color" "rgba(168,85,247,0.45)"
                     ]
                     [ text (String.fromInt (List.length crystalData) ++ " entries") ]
                 ]
@@ -677,8 +677,8 @@ viewMainContent model =
             , style "gap" "20px"
             , style "align-items" "start"
             ]
-            [ viewAsepritePanel "doggo.png" "doggo.png" 64 64
-            , viewAsepritePanel "quacky.png" "quacky.png" 64 64
+            [ viewAsepritePanel "doggo.png" "doggo.png" 64 64 0
+            , viewAsepritePanel "quacky.png" "quacky.png" 64 64 2
             ]
         ]
 
@@ -694,7 +694,7 @@ viewSectionDivider label =
         [ div
             [ style "font-family" "'Space Mono', monospace"
             , style "font-size" "11px"
-            , style "color" "rgba(168,85,247,0.3)"
+            , style "color" "rgba(168,85,247,0.5)"
             , style "letter-spacing" "0.15em"
             , style "white-space" "nowrap"
             ]
@@ -708,8 +708,8 @@ viewSectionDivider label =
         ]
 
 
-viewAsepritePanel : String -> String -> Int -> Int -> Html Msg
-viewAsepritePanel filename imagePath width height =
+viewAsepritePanel : String -> String -> Int -> Int -> Int -> Html Msg
+viewAsepritePanel filename imagePath width height selectedFrame =
     let
         aseBg =
             "#232338"
@@ -877,11 +877,11 @@ viewAsepritePanel filename imagePath width height =
                         div
                             [ style "width" "20px"
                             , style "height" "16px"
-                            , style "border" ("1px solid " ++ (if i == 0 then aseHighlight else aseBorder))
-                            , style "background" (if i == 0 then "#3a3a5c" else "#222240")
+                            , style "border" ("1px solid " ++ (if i == selectedFrame then aseHighlight else aseBorder))
+                            , style "background" (if i == selectedFrame then "#3a3a5c" else "#222240")
                             , style "font-family" "'Space Mono', monospace"
                             , style "font-size" "7px"
-                            , style "color" (if i == 0 then aseTextBright else aseText)
+                            , style "color" (if i == selectedFrame then aseTextBright else aseText)
                             , style "display" "flex"
                             , style "align-items" "center"
                             , style "justify-content" "center"
@@ -895,7 +895,7 @@ viewAsepritePanel filename imagePath width height =
                 , style "font-size" "8px"
                 , style "color" aseText
                 ]
-                [ text "Frame 1/5" ]
+                [ text ("Frame " ++ String.fromInt (selectedFrame + 1) ++ "/5") ]
             ]
         , -- Color palette bar
           div
@@ -958,7 +958,7 @@ viewTerminal model =
             [ div
                 [ style "font-family" "'Space Mono', monospace"
                 , style "font-size" "12px"
-                , style "color" "rgba(168,85,247,0.5)"
+                , style "color" "rgba(168,85,247,0.7)"
                 , style "letter-spacing" "0.1em"
                 ]
                 [ text "TERMINAL.SH" ]
@@ -996,10 +996,10 @@ viewTerminalLine line =
 
         color =
             if isCommand then
-                "rgba(168,85,247,0.7)"
+                "rgba(168,85,247,0.85)"
 
             else
-                "rgba(196,195,200,0.45)"
+                "rgba(196,195,200,0.75)"
     in
     div
         [ style "color" color
@@ -1016,7 +1016,7 @@ viewTerminalActiveLine current =
         , style "align-items" "center"
         ]
         [ span
-            [ style "color" "rgba(168,85,247,0.7)"
+            [ style "color" "rgba(168,85,247,0.85)"
             , style "white-space" "pre-wrap"
             ]
             [ text current ]
@@ -1058,7 +1058,7 @@ viewFooter =
                 [ div
                     [ style "font-family" "'Space Mono', monospace"
                     , style "font-size" "12px"
-                    , style "color" "rgba(168,85,247,0.2)"
+                    , style "color" "rgba(168,85,247,0.4)"
                     , style "letter-spacing" "0.1em"
                     ]
                     [ text "JAW // 2026" ]
@@ -1092,7 +1092,7 @@ viewFooter =
             , div
                 [ style "font-family" "'Space Mono', monospace"
                 , style "font-size" "12px"
-                , style "color" "rgba(168,85,247,0.15)"
+                , style "color" "rgba(168,85,247,0.35)"
                 ]
                 [ text "rendered in elm" ]
             ]

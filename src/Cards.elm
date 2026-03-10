@@ -181,7 +181,7 @@ viewCrystalCard toggleMsg expandedSet idx crystal =
                 [ class "card-idx"
                 , style "font-family" "'Space Mono', monospace"
                 , style "font-size" "13px"
-                , style "color" ("rgba(" ++ catColor ++ ",0.35)")
+                , style "color" ("rgba(" ++ catColor ++ ",0.7)")
                 , style "transition" "color 0.3s ease"
                 ]
                 [ text idxStr ]
@@ -198,7 +198,7 @@ viewCrystalCard toggleMsg expandedSet idx crystal =
                     [ style "font-family" "'Space Mono', monospace"
                     , style "font-size" "11px"
                     , style "letter-spacing" "0.2em"
-                    , style "color" ("rgba(" ++ catColor ++ ",0.55)")
+                    , style "color" ("rgba(" ++ catColor ++ ",0.85)")
                     , style "border" ("1px solid rgba(" ++ catColor ++ ",0.15)")
                     , style "padding" "2px 8px"
                     ]
@@ -206,7 +206,7 @@ viewCrystalCard toggleMsg expandedSet idx crystal =
                 , span
                     [ style "font-family" "'Space Mono', monospace"
                     , style "font-size" "12px"
-                    , style "color" "rgba(196,195,200,0.3)"
+                    , style "color" "rgba(196,195,200,0.9)"
                     ]
                     [ text crystal.period ]
                 ]
@@ -221,13 +221,13 @@ viewCrystalCard toggleMsg expandedSet idx crystal =
              , div
                 [ style "font-family" "'Space Mono', monospace"
                 , style "font-size" "13px"
-                , style "color" ("rgba(" ++ catColor ++ ",0.4)")
+                , style "color" ("rgba(" ++ catColor ++ ",0.75)")
                 , style "margin-bottom" "10px"
                 ]
                 [ text crystal.org ]
              , div
                 [ style "font-size" "14px"
-                , style "color" "rgba(196,195,200,0.5)"
+                , style "color" "rgba(196,195,200,0.9)"
                 , style "line-height" "1.5"
                 , style "margin-bottom" (if isExpanded then "14px" else "0")
                 ]
@@ -248,14 +248,14 @@ viewCrystalCard toggleMsg expandedSet idx crystal =
                                         [ span
                                             [ style "font-family" "'Space Mono', monospace"
                                             , style "font-size" "11px"
-                                            , style "color" ("rgba(" ++ catColor ++ ",0.25)")
+                                            , style "color" ("rgba(" ++ catColor ++ ",0.6)")
                                             , style "min-width" "12px"
                                             , style "padding-top" "2px"
                                             ]
                                             [ text (String.fromInt (di + 1) ++ ".") ]
                                         , span
                                             [ style "font-size" "13px"
-                                            , style "color" "rgba(196,195,200,0.55)"
+                                            , style "color" "rgba(196,195,200,0.9)"
                                             , style "line-height" "1.5"
                                             ]
                                             [ text detail ]
@@ -278,7 +278,7 @@ viewCrystalCard toggleMsg expandedSet idx crystal =
                 [ class "card-arrow"
                 , style "font-family" "'Space Mono', monospace"
                 , style "font-size" "16px"
-                , style "color" ("rgba(" ++ catColor ++ ",0.2)")
+                , style "color" ("rgba(" ++ catColor ++ ",0.55)")
                 , style "opacity" "0.5"
                 , style "transition" "opacity 0.3s ease, transform 0.3s ease"
                 ]

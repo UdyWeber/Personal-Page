@@ -271,9 +271,32 @@
     }
     setupCanvas(container);
     createOverlay(container);
+    createResetButton();
     running = true;
     frame();
   }
 
-  window.SandSim = { start: tryStart };
+  function createResetButton() {
+    var bar = document.getElementById("sand-bottom-bar");
+    if (!bar) return;
+    var btn = document.createElement("button");
+    btn.textContent = "RESET";
+    btn.style.cssText = [
+      "font-family:'Space Mono',monospace", "font-size:9px",
+      "color:rgba(168,85,247,0.5)", "background:rgba(168,85,247,0.06)",
+      "border:1px solid rgba(168,85,247,0.15)", "padding:4px 10px",
+      "cursor:pointer", "letter-spacing:0.1em", "text-transform:uppercase"
+    ].join(";");
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      grid.fill(0);
+      hue = 1;
+    });
+    bar.appendChild(btn);
+  }
+
+  window.SandSim = {
+    start: tryStart,
+    reset: function () { grid.fill(0); hue = 1; }
+  };
 })();
