@@ -2,6 +2,86 @@ module Game exposing (GameState, Keys, initGame, updateGame, viewAsteroidsGame)
 
 import Html exposing (Html, div, text)
 import Html.Attributes exposing (style)
+import Set exposing (Set)
+import Theme
+
+
+
+-- CONSTANTS
+
+
+arenaWidth : Float
+arenaWidth =
+    400
+
+
+arenaHeight : Float
+arenaHeight =
+    400
+
+
+rotationSpeed : Float
+rotationSpeed =
+    0.06
+
+
+thrustPower : Float
+thrustPower =
+    0.08
+
+
+friction : Float
+friction =
+    0.99
+
+
+bulletSpeed : Float
+bulletSpeed =
+    4
+
+
+bulletLifetime : Float
+bulletLifetime =
+    600
+
+
+shootCooldown : Float
+shootCooldown =
+    150
+
+
+spawnInterval : Float
+spawnInterval =
+    4000
+
+
+shipCollisionRadius : Float
+shipCollisionRadius =
+    8
+
+
+minSplitSize : Float
+minSplitSize =
+    14
+
+
+splitSizeFactor : Float
+splitSizeFactor =
+    0.55
+
+
+pctX : Float -> String
+pctX x =
+    String.fromFloat (x / arenaWidth * 100) ++ "%"
+
+
+pctY : Float -> String
+pctY y =
+    String.fromFloat (y / arenaHeight * 100) ++ "%"
+
+
+
+-- TYPES
 
 
 type alias Vec =
@@ -43,9 +123,13 @@ type alias Keys =
     }
 
 
+
+-- INIT
+
+
 initGame : GameState
 initGame =
-    { ship = { pos = { x = 200, y = 200 }, vel = { x = 0, y = 0 }, angle = -pi / 2, thrust = False }
+    { ship = { pos = { x = arenaWidth / 2, y = arenaHeight / 2 }, vel = { x = 0, y = 0 }, angle = -pi / 2, thrust = False }
     , bullets = []
     , asteroids = initAsteroids
     , score = 0
@@ -64,14 +148,8 @@ initAsteroids =
     ]
 
 
-gameW : Float
-gameW =
-    400
 
-
-gameH : Float
-gameH =
-    400
+-- UPDATE
 
 
 updateGame : Float -> Keys -> GameState -> GameState
@@ -81,96 +159,28 @@ updateGame delta keys game =
 
     else
         let
-            dt =
+            normalizedDelta =
                 delta / 16.667
 
-            rotSpeed =
-                0.06 * dt
-
-            newAngle =
-                game.ship.angle
-                    + (if keys.right then rotSpeed else 0)
-                    - (if keys.left then rotSpeed else 0)
-
-            thrustPower =
-                0.08 * dt
-
-            ax =
-                if keys.up then cos newAngle * thrustPower else 0
-
-            ay =
-                if keys.up then sin newAngle * thrustPower else 0
-
-            friction =
-                0.99
-
-            newVx =
-                (game.ship.vel.x + ax) * friction
-
-            newVy =
-                (game.ship.vel.y + ay) * friction
-
-            newShipX =
-                wrapCoord (game.ship.pos.x + newVx * dt) gameW
-
-            newShipY =
-                wrapCoord (game.ship.pos.y + newVy * dt) gameH
-
             newShip =
-                { pos = { x = newShipX, y = newShipY }
-                , vel = { x = newVx, y = newVy }
-                , angle = newAngle
-                , thrust = keys.up
-                }
+                updateShip normalizedDelta keys game.ship
 
             newCooldown =
                 max 0 (game.cooldown - delta)
 
-            spawnBullet =
+            shouldSpawnBullet =
                 keys.space && newCooldown <= 0
 
-            bulletSpeed =
-                4
-
-            freshBullet =
-                if spawnBullet then
-                    [ { pos = newShip.pos
-                      , vel =
-                            { x = cos newAngle * bulletSpeed + newVx * 0.5
-                            , y = sin newAngle * bulletSpeed + newVy * 0.5
-                            }
-                      , life = 600
-                      }
-                    ]
-
-                else
-                    []
-
             updatedBullets =
-                freshBullet
-                    ++ List.filterMap
-                        (\b ->
-                            let
-                                nb =
-                                    { b
-                                        | pos =
-                                            { x = wrapCoord (b.pos.x + b.vel.x * dt) gameW
-                                            , y = wrapCoord (b.pos.y + b.vel.y * dt) gameH
-                                            }
-                                        , life = b.life - delta
-                                    }
-                            in
-                            if nb.life > 0 then Just nb else Nothing
-                        )
-                        game.bullets
+                updateBullets normalizedDelta delta newShip shouldSpawnBullet game.bullets
 
             movedAsteroids =
                 List.map
-                    (\a ->
-                        { a
+                    (\asteroid ->
+                        { asteroid
                             | pos =
-                                { x = wrapCoord (a.pos.x + a.vel.x * dt) gameW
-                                , y = wrapCoord (a.pos.y + a.vel.y * dt) gameH
+                                { x = wrapCoord (asteroid.pos.x + asteroid.vel.x * normalizedDelta) arenaWidth
+                                , y = wrapCoord (asteroid.pos.y + asteroid.vel.y * normalizedDelta) arenaHeight
                                 }
                         }
                     )
@@ -182,32 +192,23 @@ updateGame delta keys game =
             newSmallAsteroids =
                 List.concatMap splitAsteroid destroyed
 
-            newSpawnTimer =
-                game.spawnTimer + delta
-
-            spawnedAsteroids =
-                if newSpawnTimer > 4000 then
-                    [ { pos = { x = frac (game.spawnTimer * 0.017) * gameW, y = 0 }
-                      , vel = { x = frac (game.spawnTimer * 0.031) * 0.8 - 0.4, y = 0.3 + frac (game.spawnTimer * 0.013) * 0.3 }
-                      , size = 20 + frac (game.spawnTimer * 0.023) * 15
-                      , seed = game.spawnTimer
-                      }
-                    ]
-
-                else
-                    []
+            ( spawnedAsteroids, newSpawnTimer ) =
+                spawnAsteroids delta game.spawnTimer game.asteroids
 
             finalAsteroids =
                 survivingAsteroids ++ newSmallAsteroids ++ spawnedAsteroids
 
             shipHit =
                 List.any
-                    (\a ->
+                    (\asteroid ->
                         let
-                            ddx = newShipX - a.pos.x
-                            ddy = newShipY - a.pos.y
+                            dx =
+                                newShip.pos.x - asteroid.pos.x
+
+                            dy =
+                                newShip.pos.y - asteroid.pos.y
                         in
-                        sqrt (ddx * ddx + ddy * ddy) < a.size + 8
+                        sqrt (dx * dx + dy * dy) < asteroid.size + shipCollisionRadius
                     )
                     finalAsteroids
         in
@@ -215,10 +216,131 @@ updateGame delta keys game =
         , bullets = survivingBullets
         , asteroids = finalAsteroids
         , score = game.score + List.length destroyed * 100
-        , cooldown = if spawnBullet then 150 else newCooldown
+        , cooldown =
+            if shouldSpawnBullet then
+                shootCooldown
+
+            else
+                newCooldown
         , gameOver = shipHit
-        , spawnTimer = if newSpawnTimer > 4000 then 0 else newSpawnTimer
+        , spawnTimer = newSpawnTimer
         }
+
+
+updateShip : Float -> Keys -> Ship -> Ship
+updateShip normalizedDelta keys ship =
+    let
+        rotAmount =
+            rotationSpeed * normalizedDelta
+
+        newAngle =
+            ship.angle
+                + (if keys.right then
+                    rotAmount
+
+                   else
+                    0
+                  )
+                - (if keys.left then
+                    rotAmount
+
+                   else
+                    0
+                  )
+
+        thrustAmount =
+            thrustPower * normalizedDelta
+
+        ax =
+            if keys.up then
+                cos newAngle * thrustAmount
+
+            else
+                0
+
+        ay =
+            if keys.up then
+                sin newAngle * thrustAmount
+
+            else
+                0
+
+        newVx =
+            (ship.vel.x + ax) * friction
+
+        newVy =
+            (ship.vel.y + ay) * friction
+
+        newX =
+            wrapCoord (ship.pos.x + newVx * normalizedDelta) arenaWidth
+
+        newY =
+            wrapCoord (ship.pos.y + newVy * normalizedDelta) arenaHeight
+    in
+    { pos = { x = newX, y = newY }
+    , vel = { x = newVx, y = newVy }
+    , angle = newAngle
+    , thrust = keys.up
+    }
+
+
+updateBullets : Float -> Float -> Ship -> Bool -> List Bullet -> List Bullet
+updateBullets normalizedDelta rawDelta ship shouldSpawn bullets =
+    let
+        freshBullet =
+            if shouldSpawn then
+                [ { pos = ship.pos
+                  , vel =
+                        { x = cos ship.angle * bulletSpeed + ship.vel.x * 0.5
+                        , y = sin ship.angle * bulletSpeed + ship.vel.y * 0.5
+                        }
+                  , life = bulletLifetime
+                  }
+                ]
+
+            else
+                []
+    in
+    freshBullet
+        ++ List.filterMap
+            (\bullet ->
+                let
+                    movedBullet =
+                        { bullet
+                            | pos =
+                                { x = wrapCoord (bullet.pos.x + bullet.vel.x * normalizedDelta) arenaWidth
+                                , y = wrapCoord (bullet.pos.y + bullet.vel.y * normalizedDelta) arenaHeight
+                                }
+                            , life = bullet.life - rawDelta
+                        }
+                in
+                if movedBullet.life > 0 then
+                    Just movedBullet
+
+                else
+                    Nothing
+            )
+            bullets
+
+
+spawnAsteroids : Float -> Float -> List Asteroid -> ( List Asteroid, Float )
+spawnAsteroids rawDelta currentTimer asteroids =
+    let
+        newTimer =
+            currentTimer + rawDelta
+    in
+    if newTimer > spawnInterval then
+        ( [ { pos = { x = Theme.frac (currentTimer * 0.017) * arenaWidth, y = 0 }
+            , vel = { x = Theme.frac (currentTimer * 0.031) * 0.8 - 0.4, y = 0.3 + Theme.frac (currentTimer * 0.013) * 0.3 }
+            , size = 20 + Theme.frac (currentTimer * 0.023) * 15
+            , seed = currentTimer
+            }
+          ]
+        , 0
+        )
+
+    else
+        ( [], newTimer )
 
 
 wrapCoord : Float -> Float -> Float
@@ -236,69 +358,83 @@ wrapCoord v maxVal =
 resolveCollisions : List Asteroid -> List Bullet -> ( List Asteroid, List Bullet, List Asteroid )
 resolveCollisions asteroids bullets =
     let
-        checkAsteroid a =
-            let
-                hitBullet =
-                    List.any
-                        (\b ->
-                            let
-                                ddx = a.pos.x - b.pos.x
-                                ddy = a.pos.y - b.pos.y
-                            in
-                            sqrt (ddx * ddx + ddy * ddy) < a.size
-                        )
-                        bullets
-            in
-            ( a, hitBullet )
+        indexedBullets =
+            List.indexedMap Tuple.pair bullets
 
-        results =
-            List.map checkAsteroid asteroids
+        ( survivingAsteroids, destroyedAsteroids, hitBulletIndices ) =
+            List.foldl
+                (\asteroid ( surviving, destroyed, hitIndices ) ->
+                    let
+                        maybeHitIndex =
+                            List.foldl
+                                (\( idx, bullet ) acc ->
+                                    case acc of
+                                        Just _ ->
+                                            acc
 
-        surviving =
-            List.filterMap (\( a, hit ) -> if hit then Nothing else Just a) results
+                                        Nothing ->
+                                            let
+                                                dx =
+                                                    asteroid.pos.x - bullet.pos.x
 
-        destroyed =
-            List.filterMap (\( a, hit ) -> if hit then Just a else Nothing) results
+                                                dy =
+                                                    asteroid.pos.y - bullet.pos.y
+                                            in
+                                            if sqrt (dx * dx + dy * dy) < asteroid.size then
+                                                Just idx
+
+                                            else
+                                                Nothing
+                                )
+                                Nothing
+                                indexedBullets
+                    in
+                    case maybeHitIndex of
+                        Just idx ->
+                            ( surviving, asteroid :: destroyed, Set.insert idx hitIndices )
+
+                        Nothing ->
+                            ( asteroid :: surviving, destroyed, hitIndices )
+                )
+                ( [], [], Set.empty )
+                asteroids
 
         survivingBullets =
-            List.filter
-                (\b ->
-                    not
-                        (List.any
-                            (\a ->
-                                let
-                                    ddx = a.pos.x - b.pos.x
-                                    ddy = a.pos.y - b.pos.y
-                                in
-                                sqrt (ddx * ddx + ddy * ddy) < a.size
-                            )
-                            asteroids
-                        )
+            List.filterMap
+                (\( idx, bullet ) ->
+                    if Set.member idx hitBulletIndices then
+                        Nothing
+
+                    else
+                        Just bullet
                 )
-                bullets
+                indexedBullets
     in
-    ( surviving, survivingBullets, destroyed )
+    ( List.reverse survivingAsteroids, survivingBullets, List.reverse destroyedAsteroids )
 
 
 splitAsteroid : Asteroid -> List Asteroid
-splitAsteroid a =
-    if a.size < 14 then
+splitAsteroid asteroid =
+    if asteroid.size < minSplitSize then
         []
 
     else
         let
-            newSize = a.size * 0.55
-            spread = 0.5
+            newSize =
+                asteroid.size * splitSizeFactor
+
+            spread =
+                0.5
         in
-        [ { pos = a.pos
-          , vel = { x = a.vel.y * 1.2 + spread, y = -a.vel.x * 1.2 }
+        [ { pos = asteroid.pos
+          , vel = { x = asteroid.vel.y * 1.2 + spread, y = -asteroid.vel.x * 1.2 }
           , size = newSize
-          , seed = a.seed + 10
+          , seed = asteroid.seed + 10
           }
-        , { pos = a.pos
-          , vel = { x = -a.vel.y * 1.2 - spread, y = a.vel.x * 1.2 }
+        , { pos = asteroid.pos
+          , vel = { x = -asteroid.vel.y * 1.2 - spread, y = asteroid.vel.x * 1.2 }
           , size = newSize
-          , seed = a.seed + 20
+          , seed = asteroid.seed + 20
           }
         ]
 
@@ -308,38 +444,37 @@ splitAsteroid a =
 
 
 viewAsteroidsGame : GameState -> Html msg
-viewAsteroidsGame g =
+viewAsteroidsGame game =
     div []
         [ div
             [ style "display" "flex"
             , style "align-items" "center"
             , style "justify-content" "space-between"
             , style "padding" "8px 12px"
-            , style "background" "rgba(168,85,247,0.04)"
-            , style "border" "1px solid rgba(168,85,247,0.1)"
+            , style "background" (Theme.purpleA 0.04)
+            , style "border" ("1px solid " ++ Theme.purpleA 0.1)
             , style "border-bottom" "none"
             ]
             [ div
-                [ style "font-family" "'Space Mono', monospace"
+                [ style "font-family" Theme.monoFont
                 , style "font-size" "10px"
-                , style "color" "rgba(168,85,247,0.5)"
+                , style "color" (Theme.purpleA 0.5)
                 , style "letter-spacing" "0.1em"
                 ]
                 [ text "ASTEROIDS.EXE" ]
             , div
-                [ style "font-family" "'Space Mono', monospace"
+                [ style "font-family" Theme.monoFont
                 , style "font-size" "10px"
-                , style "color" "rgba(168,85,247,0.3)"
+                , style "color" (Theme.purpleA 0.3)
                 ]
-                [ text ("SCORE: " ++ String.fromInt g.score) ]
+                [ text ("SCORE: " ++ String.fromInt game.score) ]
             ]
         , div
             [ style "position" "relative"
             , style "width" "100%"
-            , style "max-width" "400px"
             , style "aspect-ratio" "1"
             , style "background" "rgba(0,0,0,0.6)"
-            , style "border" "1px solid rgba(168,85,247,0.1)"
+            , style "border" ("1px solid " ++ Theme.purpleA 0.1)
             , style "overflow" "hidden"
             ]
             ([ div
@@ -349,24 +484,30 @@ viewAsteroidsGame g =
                 , style "width" "100%"
                 , style "height" "100%"
                 , style "background-image"
-                    "linear-gradient(rgba(168,85,247,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(168,85,247,0.03) 1px, transparent 1px)"
+                    ("linear-gradient(" ++ Theme.purpleA 0.03 ++ " 1px, transparent 1px), linear-gradient(90deg, " ++ Theme.purpleA 0.03 ++ " 1px, transparent 1px)")
                 , style "background-size" "40px 40px"
                 ]
                 []
              ]
-                ++ List.map viewGameAsteroid g.asteroids
-                ++ List.map viewGameBullet g.bullets
-                ++ [ viewGameShip g.ship ]
-                ++ (if g.gameOver then [ viewGameOver g.score ] else [])
+                ++ List.map viewGameAsteroid game.asteroids
+                ++ List.map viewGameBullet game.bullets
+                ++ [ viewGameShip game.ship ]
+                ++ (if game.gameOver then
+                        [ viewGameOver game.score ]
+
+                    else
+                        []
+                   )
+                ++ [ viewCrtScanlines, viewCrtVignette ]
             )
         , div
             [ style "padding" "8px 12px"
-            , style "background" "rgba(168,85,247,0.02)"
-            , style "border" "1px solid rgba(168,85,247,0.06)"
+            , style "background" (Theme.purpleA 0.02)
+            , style "border" ("1px solid " ++ Theme.purpleA 0.06)
             , style "border-top" "none"
-            , style "font-family" "'Space Mono', monospace"
+            , style "font-family" Theme.monoFont
             , style "font-size" "9px"
-            , style "color" "rgba(168,85,247,0.25)"
+            , style "color" (Theme.purpleA 0.25)
             , style "letter-spacing" "0.05em"
             ]
             [ text "WASD / arrows + space to shoot" ]
@@ -376,23 +517,24 @@ viewAsteroidsGame g =
 viewGameShip : Ship -> Html msg
 viewGameShip ship =
     let
-        angleDeg = ship.angle * 180 / pi + 90
+        angleDeg =
+            ship.angle * 180 / pi + 90
     in
     div
         [ style "position" "absolute"
-        , style "left" (String.fromFloat (ship.pos.x - 10) ++ "px")
-        , style "top" (String.fromFloat (ship.pos.y - 10) ++ "px")
+        , style "left" (pctX ship.pos.x)
+        , style "top" (pctY ship.pos.y)
         , style "width" "20px"
         , style "height" "20px"
-        , style "transform" ("rotate(" ++ String.fromFloat angleDeg ++ "deg)")
+        , style "transform" ("translate(-50%, -50%) rotate(" ++ String.fromFloat angleDeg ++ "deg)")
         ]
         [ div
             [ style "width" "0"
             , style "height" "0"
             , style "border-left" "8px solid transparent"
             , style "border-right" "8px solid transparent"
-            , style "border-bottom" "20px solid rgba(168,85,247,0.8)"
-            , style "filter" "drop-shadow(0 0 4px rgba(168,85,247,0.6))"
+            , style "border-bottom" ("20px solid " ++ Theme.purpleA 0.8)
+            , style "filter" ("drop-shadow(0 0 4px " ++ Theme.purpleA 0.6 ++ ")")
             , style "margin-left" "2px"
             ]
             []
@@ -402,10 +544,10 @@ viewGameShip ship =
                 , style "height" "0"
                 , style "border-left" "4px solid transparent"
                 , style "border-right" "4px solid transparent"
-                , style "border-top" "8px solid rgba(217,70,239,0.7)"
+                , style "border-top" ("8px solid " ++ Theme.rgbaStr Theme.fuchsia 0.7)
                 , style "margin-left" "6px"
                 , style "margin-top" "1px"
-                , style "filter" "drop-shadow(0 0 3px rgba(217,70,239,0.5))"
+                , style "filter" ("drop-shadow(0 0 3px " ++ Theme.rgbaStr Theme.fuchsia 0.5 ++ ")")
                 ]
                 []
 
@@ -418,30 +560,31 @@ viewGameBullet : Bullet -> Html msg
 viewGameBullet bullet =
     div
         [ style "position" "absolute"
-        , style "left" (String.fromFloat (bullet.pos.x - 2) ++ "px")
-        , style "top" (String.fromFloat (bullet.pos.y - 2) ++ "px")
+        , style "left" (pctX bullet.pos.x)
+        , style "top" (pctY bullet.pos.y)
         , style "width" "4px"
         , style "height" "4px"
-        , style "background" "rgba(168,85,247,0.9)"
+        , style "transform" "translate(-50%, -50%)"
+        , style "background" (Theme.purpleA 0.9)
         , style "border-radius" "50%"
-        , style "box-shadow" "0 0 6px rgba(168,85,247,0.6)"
+        , style "box-shadow" ("0 0 6px " ++ Theme.purpleA 0.6)
         ]
         []
 
 
 viewGameAsteroid : Asteroid -> Html msg
-viewGameAsteroid a =
+viewGameAsteroid asteroid =
     div
         [ style "position" "absolute"
-        , style "left" (String.fromFloat (a.pos.x - a.size) ++ "px")
-        , style "top" (String.fromFloat (a.pos.y - a.size) ++ "px")
-        , style "width" (String.fromFloat (a.size * 2) ++ "px")
-        , style "height" (String.fromFloat (a.size * 2) ++ "px")
-        , style "border" "1px solid rgba(168,85,247,0.3)"
+        , style "left" (pctX asteroid.pos.x)
+        , style "top" (pctY asteroid.pos.y)
+        , style "width" (String.fromFloat (asteroid.size * 2) ++ "px")
+        , style "height" (String.fromFloat (asteroid.size * 2) ++ "px")
+        , style "border" ("1px solid " ++ Theme.purpleA 0.3)
         , style "border-radius" "30% 70% 50% 40% / 60% 30% 70% 50%"
-        , style "background" "rgba(168,85,247,0.03)"
-        , style "box-shadow" "inset 0 0 8px rgba(168,85,247,0.05)"
-        , style "transform" ("rotate(" ++ String.fromFloat (a.seed * 45) ++ "deg)")
+        , style "background" (Theme.purpleA 0.03)
+        , style "box-shadow" ("inset 0 0 8px " ++ Theme.purpleA 0.05)
+        , style "transform" ("translate(-50%, -50%) rotate(" ++ String.fromFloat (asteroid.seed * 45) ++ "deg)")
         ]
         []
 
@@ -461,30 +604,55 @@ viewGameOver score =
         , style "background" "rgba(0,0,0,0.7)"
         ]
         [ div
-            [ style "font-family" "'Space Mono', monospace"
+            [ style "font-family" Theme.monoFont
             , style "font-size" "20px"
-            , style "color" "rgba(168,85,247,0.8)"
+            , style "color" (Theme.purpleA 0.8)
             , style "letter-spacing" "0.2em"
             , style "margin-bottom" "8px"
             ]
             [ text "DESTROYED" ]
         , div
-            [ style "font-family" "'Space Mono', monospace"
+            [ style "font-family" Theme.monoFont
             , style "font-size" "12px"
-            , style "color" "rgba(168,85,247,0.4)"
+            , style "color" (Theme.purpleA 0.4)
             , style "margin-bottom" "16px"
             ]
             [ text ("SCORE: " ++ String.fromInt score) ]
         , div
-            [ style "font-family" "'Space Mono', monospace"
+            [ style "font-family" Theme.monoFont
             , style "font-size" "10px"
-            , style "color" "rgba(168,85,247,0.3)"
+            , style "color" (Theme.purpleA 0.3)
             , style "animation" "blink 1.5s steps(1) infinite"
             ]
             [ text "press R to restart" ]
         ]
 
 
-frac : Float -> Float
-frac f =
-    f - toFloat (floor f)
+viewCrtScanlines : Html msg
+viewCrtScanlines =
+    div
+        [ style "position" "absolute"
+        , style "top" "0"
+        , style "left" "0"
+        , style "width" "100%"
+        , style "height" "100%"
+        , style "background" "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px)"
+        , style "pointer-events" "none"
+        , style "z-index" "10"
+        ]
+        []
+
+
+viewCrtVignette : Html msg
+viewCrtVignette =
+    div
+        [ style "position" "absolute"
+        , style "top" "0"
+        , style "left" "0"
+        , style "width" "100%"
+        , style "height" "100%"
+        , style "background" "radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.6) 100%)"
+        , style "pointer-events" "none"
+        , style "z-index" "11"
+        ]
+        []

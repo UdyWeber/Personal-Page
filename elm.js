@@ -5204,13 +5204,17 @@ var $elm$core$Task$perform = F2(
 				A2($elm$core$Task$map, toMessage, task)));
 	});
 var $elm$browser$Browser$document = _Browser_document;
+var $elm$json$Json$Decode$float = _Json_decodeFloat;
 var $author$project$Main$NoPanel = {$: 'NoPanel'};
+var $author$project$Main$NotResetting = {$: 'NotResetting'};
 var $elm$core$Set$Set_elm_builtin = function (a) {
 	return {$: 'Set_elm_builtin', a: a};
 };
 var $elm$core$Dict$RBEmpty_elm_builtin = {$: 'RBEmpty_elm_builtin'};
 var $elm$core$Dict$empty = $elm$core$Dict$RBEmpty_elm_builtin;
 var $elm$core$Set$empty = $elm$core$Set$Set_elm_builtin($elm$core$Dict$empty);
+var $author$project$Game$arenaHeight = 400;
+var $author$project$Game$arenaWidth = 400;
 var $elm$core$Basics$negate = function (n) {
 	return -n;
 };
@@ -5250,7 +5254,7 @@ var $author$project$Game$initGame = {
 	score: 0,
 	ship: {
 		angle: (-$elm$core$Basics$pi) / 2,
-		pos: {x: 200, y: 200},
+		pos: {x: $author$project$Game$arenaWidth / 2, y: $author$project$Game$arenaHeight / 2},
 		thrust: false,
 		vel: {x: 0, y: 0}
 	},
@@ -5259,14 +5263,16 @@ var $author$project$Game$initGame = {
 var $author$project$Sand$initSand = {mouseDown: false};
 var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
-var $author$project$Main$init = function (_v0) {
+var $author$project$Main$init = function (seed) {
 	return _Utils_Tuple2(
 		{
 			expandedCards: $elm$core$Set$empty,
 			focusedPanel: $author$project$Main$NoPanel,
 			game: $author$project$Game$initGame,
 			keys: {left: false, right: false, space: false, up: false},
+			resetPhase: $author$project$Main$NotResetting,
 			sand: $author$project$Sand$initSand,
+			seed: seed,
 			terminalCharIdx: 0,
 			terminalCurrentLine: '',
 			terminalLines: _List_Nil,
@@ -5837,6 +5843,12 @@ var $author$project$Main$subscriptions = function (_v0) {
 			]));
 };
 var $author$project$Main$AsteroidsPanel = {$: 'AsteroidsPanel'};
+var $author$project$Main$CrtOff = function (a) {
+	return {$: 'CrtOff', a: a};
+};
+var $author$project$Main$CrtOn = function (a) {
+	return {$: 'CrtOn', a: a};
+};
 var $elm$core$Basics$ge = _Utils_ge;
 var $elm$core$List$drop = F2(
 	function (n, list) {
@@ -5868,14 +5880,14 @@ var $elm$core$List$head = function (list) {
 		return $elm$core$Maybe$Nothing;
 	}
 };
-var $author$project$Main$getAt = F2(
+var $author$project$Theme$getAt = F2(
 	function (idx, list) {
 		return $elm$core$List$head(
 			A2($elm$core$List$drop, idx, list));
 	});
 var $elm$core$Basics$modBy = _Basics_modBy;
 var $author$project$Main$terminalContent = _List_fromArray(
-	['$ whoami', 'jaw // joao arthur weber', '$ cat /etc/motd', 'welcome to the void. you are visitor #4091.', '$ uptime', 'system has been running for 22 years, 8 months', '$ ls -la ~/skills', 'drwxr-xr-x  python  sql  rust  java  scala', 'drwxr-xr-x  golang  c++  c  elixir  lua', 'drwxr-xr-x  docker  neovim  git  unix  spark', '$ cat ~/status', 'currently building data pipelines @ SAP', 'studying CS @ Unisinos', 'hacking on side projects in Rust and C++', '$ fortune', '\"the best code is no code at all\" - someone wise', '$ ping github.com/joaoarthurweber', 'PING github.com ... 64 bytes: time=0.42ms', '$ echo $EDITOR', 'neovim', '$ history | tail -5', '1337  elm make src/Main.elm --output=elm.js', '1338  cargo build --release', '1339  just test', '1340  docker compose up -d', '1341  git push origin main']);
+	['$ whoami', 'jaw // joao arthur weber', '$ cat /etc/motd', 'welcome to the void. you are visitor #4091.', '$ uptime', 'system has been running for 22 years, 8 months', '$ ls -la ~/skills', 'drwxr-xr-x  python  sql  rust  java  scala', 'drwxr-xr-x  golang  c++  c  elixir  lua', 'drwxr-xr-x  docker  neovim  git  unix  spark', '$ cat ~/status', 'currently building data pipelines @ SAP', 'studying CS @ Unisinos', 'hacking on side projects in Rust and C++', '$ fortune', '\"the best code is no code at all\" - someone wise', '$ ping github.com/udyweber', 'PING github.com ... 64 bytes: time=0.42ms', '$ echo $EDITOR', 'neovim', '$ history | tail -5', '1337  elm make src/Main.elm --output=elm.js', '1338  cargo build --release', '1339  just test', '1340  docker compose up -d', '1341  git push origin main']);
 var $author$project$Main$advanceTerminal = F5(
 	function (timer, delta, lines, current, charIdx) {
 		var typingSpeed = 35;
@@ -5887,7 +5899,7 @@ var $author$project$Main$advanceTerminal = F5(
 			var lineIdx = $elm$core$List$length(lines);
 			var wrappedLineIdx = A2($elm$core$Basics$modBy, totalLines, lineIdx);
 			if (_Utils_cmp(newTimer, typingSpeed) > -1) {
-				var _v0 = A2($author$project$Main$getAt, wrappedLineIdx, $author$project$Main$terminalContent);
+				var _v0 = A2($author$project$Theme$getAt, wrappedLineIdx, $author$project$Main$terminalContent);
 				if (_v0.$ === 'Nothing') {
 					return {charIdx: charIdx, current: current, lines: lines, timer: 0};
 				} else {
@@ -6405,210 +6417,234 @@ var $elm$core$List$concatMap = F2(
 		return $elm$core$List$concat(
 			A2($elm$core$List$map, f, list));
 	});
-var $elm$core$Basics$cos = _Basics_cos;
-var $author$project$Game$frac = function (f) {
-	return f - $elm$core$Basics$floor(f);
-};
-var $author$project$Game$gameH = 400;
-var $author$project$Game$gameW = 400;
-var $elm$core$List$filter = F2(
-	function (isGood, list) {
-		return A3(
-			$elm$core$List$foldr,
-			F2(
-				function (x, xs) {
-					return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
-				}),
-			_List_Nil,
-			list);
+var $elm$core$Tuple$pair = F2(
+	function (a, b) {
+		return _Utils_Tuple2(a, b);
 	});
-var $elm$core$Basics$not = _Basics_not;
 var $elm$core$Basics$sqrt = _Basics_sqrt;
 var $author$project$Game$resolveCollisions = F2(
 	function (asteroids, bullets) {
+		var indexedBullets = A2($elm$core$List$indexedMap, $elm$core$Tuple$pair, bullets);
+		var _v0 = A3(
+			$elm$core$List$foldl,
+			F2(
+				function (asteroid, _v1) {
+					var surviving = _v1.a;
+					var destroyed = _v1.b;
+					var hitIndices = _v1.c;
+					var maybeHitIndex = A3(
+						$elm$core$List$foldl,
+						F2(
+							function (_v3, acc) {
+								var idx = _v3.a;
+								var bullet = _v3.b;
+								if (acc.$ === 'Just') {
+									return acc;
+								} else {
+									var dy = asteroid.pos.y - bullet.pos.y;
+									var dx = asteroid.pos.x - bullet.pos.x;
+									return (_Utils_cmp(
+										$elm$core$Basics$sqrt((dx * dx) + (dy * dy)),
+										asteroid.size) < 0) ? $elm$core$Maybe$Just(idx) : $elm$core$Maybe$Nothing;
+								}
+							}),
+						$elm$core$Maybe$Nothing,
+						indexedBullets);
+					if (maybeHitIndex.$ === 'Just') {
+						var idx = maybeHitIndex.a;
+						return _Utils_Tuple3(
+							surviving,
+							A2($elm$core$List$cons, asteroid, destroyed),
+							A2($elm$core$Set$insert, idx, hitIndices));
+					} else {
+						return _Utils_Tuple3(
+							A2($elm$core$List$cons, asteroid, surviving),
+							destroyed,
+							hitIndices);
+					}
+				}),
+			_Utils_Tuple3(_List_Nil, _List_Nil, $elm$core$Set$empty),
+			asteroids);
+		var survivingAsteroids = _v0.a;
+		var destroyedAsteroids = _v0.b;
+		var hitBulletIndices = _v0.c;
 		var survivingBullets = A2(
-			$elm$core$List$filter,
-			function (b) {
-				return !A2(
-					$elm$core$List$any,
-					function (a) {
-						var ddy = a.pos.y - b.pos.y;
-						var ddx = a.pos.x - b.pos.x;
-						return _Utils_cmp(
-							$elm$core$Basics$sqrt((ddx * ddx) + (ddy * ddy)),
-							a.size) < 0;
-					},
-					asteroids);
-			},
-			bullets);
-		var checkAsteroid = function (a) {
-			var hitBullet = A2(
-				$elm$core$List$any,
-				function (b) {
-					var ddy = a.pos.y - b.pos.y;
-					var ddx = a.pos.x - b.pos.x;
-					return _Utils_cmp(
-						$elm$core$Basics$sqrt((ddx * ddx) + (ddy * ddy)),
-						a.size) < 0;
-				},
-				bullets);
-			return _Utils_Tuple2(a, hitBullet);
-		};
-		var results = A2($elm$core$List$map, checkAsteroid, asteroids);
-		var destroyed = A2(
 			$elm$core$List$filterMap,
-			function (_v1) {
-				var a = _v1.a;
-				var hit = _v1.b;
-				return hit ? $elm$core$Maybe$Just(a) : $elm$core$Maybe$Nothing;
+			function (_v5) {
+				var idx = _v5.a;
+				var bullet = _v5.b;
+				return A2($elm$core$Set$member, idx, hitBulletIndices) ? $elm$core$Maybe$Nothing : $elm$core$Maybe$Just(bullet);
 			},
-			results);
-		var surviving = A2(
-			$elm$core$List$filterMap,
-			function (_v0) {
-				var a = _v0.a;
-				var hit = _v0.b;
-				return hit ? $elm$core$Maybe$Nothing : $elm$core$Maybe$Just(a);
-			},
-			results);
-		return _Utils_Tuple3(surviving, survivingBullets, destroyed);
+			indexedBullets);
+		return _Utils_Tuple3(
+			$elm$core$List$reverse(survivingAsteroids),
+			survivingBullets,
+			$elm$core$List$reverse(destroyedAsteroids));
 	});
-var $elm$core$Basics$sin = _Basics_sin;
-var $author$project$Game$splitAsteroid = function (a) {
-	if (a.size < 14) {
+var $author$project$Game$shipCollisionRadius = 8;
+var $author$project$Game$shootCooldown = 150;
+var $author$project$Theme$frac = function (f) {
+	return f - $elm$core$Basics$floor(f);
+};
+var $author$project$Game$spawnInterval = 4000;
+var $author$project$Game$spawnAsteroids = F3(
+	function (rawDelta, currentTimer, asteroids) {
+		var newTimer = currentTimer + rawDelta;
+		return (_Utils_cmp(newTimer, $author$project$Game$spawnInterval) > 0) ? _Utils_Tuple2(
+			_List_fromArray(
+				[
+					{
+					pos: {
+						x: $author$project$Theme$frac(currentTimer * 0.017) * $author$project$Game$arenaWidth,
+						y: 0
+					},
+					seed: currentTimer,
+					size: 20 + ($author$project$Theme$frac(currentTimer * 0.023) * 15),
+					vel: {
+						x: ($author$project$Theme$frac(currentTimer * 0.031) * 0.8) - 0.4,
+						y: 0.3 + ($author$project$Theme$frac(currentTimer * 0.013) * 0.3)
+					}
+				}
+				]),
+			0) : _Utils_Tuple2(_List_Nil, newTimer);
+	});
+var $author$project$Game$minSplitSize = 14;
+var $author$project$Game$splitSizeFactor = 0.55;
+var $author$project$Game$splitAsteroid = function (asteroid) {
+	if (_Utils_cmp(asteroid.size, $author$project$Game$minSplitSize) < 0) {
 		return _List_Nil;
 	} else {
 		var spread = 0.5;
-		var newSize = a.size * 0.55;
+		var newSize = asteroid.size * $author$project$Game$splitSizeFactor;
 		return _List_fromArray(
 			[
 				{
-				pos: a.pos,
-				seed: a.seed + 10,
+				pos: asteroid.pos,
+				seed: asteroid.seed + 10,
 				size: newSize,
-				vel: {x: (a.vel.y * 1.2) + spread, y: (-a.vel.x) * 1.2}
+				vel: {x: (asteroid.vel.y * 1.2) + spread, y: (-asteroid.vel.x) * 1.2}
 			},
 				{
-				pos: a.pos,
-				seed: a.seed + 20,
+				pos: asteroid.pos,
+				seed: asteroid.seed + 20,
 				size: newSize,
-				vel: {x: ((-a.vel.y) * 1.2) - spread, y: a.vel.x * 1.2}
+				vel: {x: ((-asteroid.vel.y) * 1.2) - spread, y: asteroid.vel.x * 1.2}
 			}
 			]);
 	}
 };
+var $author$project$Game$bulletLifetime = 600;
+var $author$project$Game$bulletSpeed = 4;
+var $elm$core$Basics$cos = _Basics_cos;
+var $elm$core$Basics$sin = _Basics_sin;
 var $author$project$Game$wrapCoord = F2(
 	function (v, maxVal) {
 		return (v < 0) ? (v + maxVal) : ((_Utils_cmp(v, maxVal) > 0) ? (v - maxVal) : v);
+	});
+var $author$project$Game$updateBullets = F5(
+	function (normalizedDelta, rawDelta, ship, shouldSpawn, bullets) {
+		var freshBullet = shouldSpawn ? _List_fromArray(
+			[
+				{
+				life: $author$project$Game$bulletLifetime,
+				pos: ship.pos,
+				vel: {
+					x: ($elm$core$Basics$cos(ship.angle) * $author$project$Game$bulletSpeed) + (ship.vel.x * 0.5),
+					y: ($elm$core$Basics$sin(ship.angle) * $author$project$Game$bulletSpeed) + (ship.vel.y * 0.5)
+				}
+			}
+			]) : _List_Nil;
+		return _Utils_ap(
+			freshBullet,
+			A2(
+				$elm$core$List$filterMap,
+				function (bullet) {
+					var movedBullet = _Utils_update(
+						bullet,
+						{
+							life: bullet.life - rawDelta,
+							pos: {
+								x: A2($author$project$Game$wrapCoord, bullet.pos.x + (bullet.vel.x * normalizedDelta), $author$project$Game$arenaWidth),
+								y: A2($author$project$Game$wrapCoord, bullet.pos.y + (bullet.vel.y * normalizedDelta), $author$project$Game$arenaHeight)
+							}
+						});
+					return (movedBullet.life > 0) ? $elm$core$Maybe$Just(movedBullet) : $elm$core$Maybe$Nothing;
+				},
+				bullets));
+	});
+var $author$project$Game$friction = 0.99;
+var $author$project$Game$rotationSpeed = 0.06;
+var $author$project$Game$thrustPower = 0.08;
+var $author$project$Game$updateShip = F3(
+	function (normalizedDelta, keys, ship) {
+		var thrustAmount = $author$project$Game$thrustPower * normalizedDelta;
+		var rotAmount = $author$project$Game$rotationSpeed * normalizedDelta;
+		var newAngle = (ship.angle + (keys.right ? rotAmount : 0)) - (keys.left ? rotAmount : 0);
+		var ay = keys.up ? ($elm$core$Basics$sin(newAngle) * thrustAmount) : 0;
+		var newVy = (ship.vel.y + ay) * $author$project$Game$friction;
+		var newY = A2($author$project$Game$wrapCoord, ship.pos.y + (newVy * normalizedDelta), $author$project$Game$arenaHeight);
+		var ax = keys.up ? ($elm$core$Basics$cos(newAngle) * thrustAmount) : 0;
+		var newVx = (ship.vel.x + ax) * $author$project$Game$friction;
+		var newX = A2($author$project$Game$wrapCoord, ship.pos.x + (newVx * normalizedDelta), $author$project$Game$arenaWidth);
+		return {
+			angle: newAngle,
+			pos: {x: newX, y: newY},
+			thrust: keys.up,
+			vel: {x: newVx, y: newVy}
+		};
 	});
 var $author$project$Game$updateGame = F3(
 	function (delta, keys, game) {
 		if (game.gameOver) {
 			return game;
 		} else {
-			var newSpawnTimer = game.spawnTimer + delta;
-			var spawnedAsteroids = (newSpawnTimer > 4000) ? _List_fromArray(
-				[
-					{
-					pos: {
-						x: $author$project$Game$frac(game.spawnTimer * 0.017) * $author$project$Game$gameW,
-						y: 0
-					},
-					seed: game.spawnTimer,
-					size: 20 + ($author$project$Game$frac(game.spawnTimer * 0.023) * 15),
-					vel: {
-						x: ($author$project$Game$frac(game.spawnTimer * 0.031) * 0.8) - 0.4,
-						y: 0.3 + ($author$project$Game$frac(game.spawnTimer * 0.013) * 0.3)
-					}
-				}
-				]) : _List_Nil;
+			var normalizedDelta = delta / 16.667;
+			var newShip = A3($author$project$Game$updateShip, normalizedDelta, keys, game.ship);
 			var newCooldown = A2($elm$core$Basics$max, 0, game.cooldown - delta);
-			var spawnBullet = keys.space && (newCooldown <= 0);
-			var friction = 0.99;
-			var dt = delta / 16.667;
+			var shouldSpawnBullet = keys.space && (newCooldown <= 0);
+			var updatedBullets = A5($author$project$Game$updateBullets, normalizedDelta, delta, newShip, shouldSpawnBullet, game.bullets);
 			var movedAsteroids = A2(
 				$elm$core$List$map,
-				function (a) {
+				function (asteroid) {
 					return _Utils_update(
-						a,
+						asteroid,
 						{
 							pos: {
-								x: A2($author$project$Game$wrapCoord, a.pos.x + (a.vel.x * dt), $author$project$Game$gameW),
-								y: A2($author$project$Game$wrapCoord, a.pos.y + (a.vel.y * dt), $author$project$Game$gameH)
+								x: A2($author$project$Game$wrapCoord, asteroid.pos.x + (asteroid.vel.x * normalizedDelta), $author$project$Game$arenaWidth),
+								y: A2($author$project$Game$wrapCoord, asteroid.pos.y + (asteroid.vel.y * normalizedDelta), $author$project$Game$arenaHeight)
 							}
 						});
 				},
 				game.asteroids);
-			var rotSpeed = 0.06 * dt;
-			var newAngle = (game.ship.angle + (keys.right ? rotSpeed : 0)) - (keys.left ? rotSpeed : 0);
-			var thrustPower = 0.08 * dt;
-			var bulletSpeed = 4;
-			var ay = keys.up ? ($elm$core$Basics$sin(newAngle) * thrustPower) : 0;
-			var newVy = (game.ship.vel.y + ay) * friction;
-			var newShipY = A2($author$project$Game$wrapCoord, game.ship.pos.y + (newVy * dt), $author$project$Game$gameH);
-			var ax = keys.up ? ($elm$core$Basics$cos(newAngle) * thrustPower) : 0;
-			var newVx = (game.ship.vel.x + ax) * friction;
-			var newShipX = A2($author$project$Game$wrapCoord, game.ship.pos.x + (newVx * dt), $author$project$Game$gameW);
-			var newShip = {
-				angle: newAngle,
-				pos: {x: newShipX, y: newShipY},
-				thrust: keys.up,
-				vel: {x: newVx, y: newVy}
-			};
-			var freshBullet = spawnBullet ? _List_fromArray(
-				[
-					{
-					life: 600,
-					pos: newShip.pos,
-					vel: {
-						x: ($elm$core$Basics$cos(newAngle) * bulletSpeed) + (newVx * 0.5),
-						y: ($elm$core$Basics$sin(newAngle) * bulletSpeed) + (newVy * 0.5)
-					}
-				}
-				]) : _List_Nil;
-			var updatedBullets = _Utils_ap(
-				freshBullet,
-				A2(
-					$elm$core$List$filterMap,
-					function (b) {
-						var nb = _Utils_update(
-							b,
-							{
-								life: b.life - delta,
-								pos: {
-									x: A2($author$project$Game$wrapCoord, b.pos.x + (b.vel.x * dt), $author$project$Game$gameW),
-									y: A2($author$project$Game$wrapCoord, b.pos.y + (b.vel.y * dt), $author$project$Game$gameH)
-								}
-							});
-						return (nb.life > 0) ? $elm$core$Maybe$Just(nb) : $elm$core$Maybe$Nothing;
-					},
-					game.bullets));
-			var _v0 = A2($author$project$Game$resolveCollisions, movedAsteroids, updatedBullets);
-			var survivingAsteroids = _v0.a;
-			var survivingBullets = _v0.b;
-			var destroyed = _v0.c;
+			var _v0 = A3($author$project$Game$spawnAsteroids, delta, game.spawnTimer, game.asteroids);
+			var spawnedAsteroids = _v0.a;
+			var newSpawnTimer = _v0.b;
+			var _v1 = A2($author$project$Game$resolveCollisions, movedAsteroids, updatedBullets);
+			var survivingAsteroids = _v1.a;
+			var survivingBullets = _v1.b;
+			var destroyed = _v1.c;
 			var newSmallAsteroids = A2($elm$core$List$concatMap, $author$project$Game$splitAsteroid, destroyed);
 			var finalAsteroids = _Utils_ap(
 				survivingAsteroids,
 				_Utils_ap(newSmallAsteroids, spawnedAsteroids));
 			var shipHit = A2(
 				$elm$core$List$any,
-				function (a) {
-					var ddy = newShipY - a.pos.y;
-					var ddx = newShipX - a.pos.x;
+				function (asteroid) {
+					var dy = newShip.pos.y - asteroid.pos.y;
+					var dx = newShip.pos.x - asteroid.pos.x;
 					return _Utils_cmp(
-						$elm$core$Basics$sqrt((ddx * ddx) + (ddy * ddy)),
-						a.size + 8) < 0;
+						$elm$core$Basics$sqrt((dx * dx) + (dy * dy)),
+						asteroid.size + $author$project$Game$shipCollisionRadius) < 0;
 				},
 				finalAsteroids);
 			return {
 				asteroids: finalAsteroids,
 				bullets: survivingBullets,
-				cooldown: spawnBullet ? 150 : newCooldown,
+				cooldown: shouldSpawnBullet ? $author$project$Game$shootCooldown : newCooldown,
 				gameOver: shipHit,
 				score: game.score + ($elm$core$List$length(destroyed) * 100),
 				ship: newShip,
-				spawnTimer: (newSpawnTimer > 4000) ? 0 : newSpawnTimer
+				spawnTimer: newSpawnTimer
 			};
 		}
 	});
@@ -6619,17 +6655,35 @@ var $author$project$Main$update = F2(
 				var delta = msg.a;
 				var ts = A5($author$project$Main$advanceTerminal, model.terminalTimer, delta, model.terminalLines, model.terminalCurrentLine, model.terminalCharIdx);
 				var newTime = model.time + delta;
+				var _v1 = function () {
+					var _v2 = model.resetPhase;
+					switch (_v2.$) {
+						case 'CrtOff':
+							var elapsed = _v2.a;
+							var nextElapsed = elapsed + delta;
+							return (nextElapsed >= 500) ? _Utils_Tuple2(
+								$author$project$Main$CrtOn(0),
+								$author$project$Game$initGame) : _Utils_Tuple2(
+								$author$project$Main$CrtOff(nextElapsed),
+								model.game);
+						case 'CrtOn':
+							var elapsed = _v2.a;
+							var nextElapsed = elapsed + delta;
+							return (nextElapsed >= 400) ? _Utils_Tuple2($author$project$Main$NotResetting, model.game) : _Utils_Tuple2(
+								$author$project$Main$CrtOn(nextElapsed),
+								model.game);
+						default:
+							return _Utils_Tuple2(
+								$author$project$Main$NotResetting,
+								A3($author$project$Game$updateGame, delta, model.keys, model.game));
+					}
+				}();
+				var newResetPhase = _v1.a;
+				var newGame = _v1.b;
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{
-							game: A3($author$project$Game$updateGame, delta, model.keys, model.game),
-							terminalCharIdx: ts.charIdx,
-							terminalCurrentLine: ts.current,
-							terminalLines: ts.lines,
-							terminalTimer: ts.timer,
-							time: newTime
-						}),
+						{game: newGame, resetPhase: newResetPhase, terminalCharIdx: ts.charIdx, terminalCurrentLine: ts.current, terminalLines: ts.lines, terminalTimer: ts.timer, time: newTime}),
 					$elm$core$Platform$Cmd$none);
 			case 'KeyDown':
 				var key = msg.a;
@@ -6643,12 +6697,12 @@ var $author$project$Main$update = F2(
 			case 'KeyUp':
 				var key = msg.a;
 				if (_Utils_eq(model.focusedPanel, $author$project$Main$AsteroidsPanel)) {
+					var newResetPhase = ((key === 'r') && (model.game.gameOver && _Utils_eq(model.resetPhase, $author$project$Main$NotResetting))) ? $author$project$Main$CrtOff(0) : model.resetPhase;
 					var newKeys = A3($author$project$Main$setKey, key, false, model.keys);
-					var newGame = ((key === 'r') && model.game.gameOver) ? $author$project$Game$initGame : model.game;
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
-							{game: newGame, keys: newKeys}),
+							{keys: newKeys, resetPhase: newResetPhase}),
 						$elm$core$Platform$Cmd$none);
 				} else {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
@@ -6670,11 +6724,25 @@ var $author$project$Main$update = F2(
 					$elm$core$Platform$Cmd$none);
 		}
 	});
+var $author$project$Main$aseBorder = '#3a3a5c';
+var $author$project$Main$aseText = '#8888aa';
+var $author$project$Main$aseTextBright = '#bbbbdd';
+var $author$project$Theme$bgDark = '#0a0a0c';
+var $author$project$Theme$monoFont = '\'Space Mono\', monospace';
 var $elm$virtual_dom$VirtualDom$node = function (tag) {
 	return _VirtualDom_node(
 		_VirtualDom_noScript(tag));
 };
 var $elm$html$Html$node = $elm$virtual_dom$VirtualDom$node;
+var $author$project$Theme$purple = {b: 247, g: 85, r: 168};
+var $elm$core$String$fromFloat = _String_fromNumber;
+var $author$project$Theme$rgbaStr = F2(
+	function (color, alpha) {
+		return 'rgba(' + ($elm$core$String$fromInt(color.r) + (',' + ($elm$core$String$fromInt(color.g) + (',' + ($elm$core$String$fromInt(color.b) + (',' + ($elm$core$String$fromFloat(alpha) + ')')))))));
+	});
+var $author$project$Theme$purpleA = function (alpha) {
+	return A2($author$project$Theme$rgbaStr, $author$project$Theme$purple, alpha);
+};
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $author$project$Main$injectStyles = A3(
@@ -6688,7 +6756,56 @@ var $author$project$Main$injectStyles = A3(
 				$elm$core$String$join,
 				'\n',
 				_List_fromArray(
-					['@import url(\'https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;700&display=swap\');', '', '*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }', 'body { overflow-x: hidden; background: #0a0a0c; }', '::selection { background: rgba(168,85,247,0.35); color: #fff; }', '', '@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }', '@keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }', '@keyframes fadeIn { from{opacity:0} to{opacity:1} }', '@keyframes scanline { from{top:-4px} to{top:100%} }', '@keyframes drift { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }', '@keyframes glitchSlice { 0%,100%{clip-path:inset(0 0 0 0)} 25%{clip-path:inset(20% 0 60% 0)} 50%{clip-path:inset(60% 0 10% 0)} 75%{clip-path:inset(40% 0 30% 0)} }', '@keyframes flicker { 0%,19%,21%,23%,25%,54%,56%,100%{opacity:1} 20%,24%,55%{opacity:0.4} }', '@keyframes marquee { from{transform:translateX(100%)} to{transform:translateX(-100%)} }', '@keyframes accrete { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }', '@keyframes termCursor { 0%,100%{opacity:1} 50%{opacity:0} }', '', '.card-link { transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease; }', '.card-link:hover { border-color: rgba(168,85,247,0.5) !important; box-shadow: 0 0 30px rgba(168,85,247,0.12), inset 0 1px 0 rgba(168,85,247,0.1) !important; transform: translateY(-4px) !important; }', '.card-link:hover .card-idx { color: rgba(168,85,247,0.8) !important; }', '.card-link:hover .card-arrow { opacity: 1 !important; transform: translateX(4px) !important; }', '.card-link:hover .card-scan { opacity: 1 !important; animation: scanline 1.5s linear infinite !important; }', '', '.footer-link { color: rgba(168,85,247,0.6); text-decoration: none; transition: color 0.2s; font-family: \'Space Mono\', monospace; font-size: 12px; letter-spacing: 0.05em; }', '.footer-link:hover { color: rgba(168,85,247,0.8); }', '', '.social-link { color: rgba(168,85,247,0.55); text-decoration: none; transition: color 0.3s ease, text-shadow 0.3s ease; }', '.social-link:hover { color: rgba(168,85,247,0.9); text-shadow: 0 0 12px rgba(168,85,247,0.3); }', '', '@media (max-width: 900px) {', '  .section-grid { grid-template-columns: 1fr !important; }', '}', '', '.ase-checkerboard {', '  background-image: linear-gradient(45deg, #1a1a2e 25%, transparent 25%), linear-gradient(-45deg, #1a1a2e 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #1a1a2e 75%), linear-gradient(-45deg, transparent 75%, #1a1a2e 75%);', '  background-size: 16px 16px;', '  background-position: 0 0, 0 8px, 8px -8px, -8px 0px;', '  background-color: #252540;', '}', '.ase-tool { width: 18px; height: 18px; border: 1px solid #3a3a5c; background: #2a2a48; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #8888aa; cursor: default; }', '.ase-tool:hover { background: #3a3a5c; color: #bbbbdd; }', '.ase-color-swatch { width: 14px; height: 14px; border: 1px solid #4a4a6c; }', ''])))
+					[
+						'@import url(\'https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;700&display=swap\');',
+						'',
+						'*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }',
+						'body { overflow-x: hidden; background: ' + ($author$project$Theme$bgDark + '; }'),
+						'::selection { background: ' + ($author$project$Theme$purpleA(0.35) + '; color: #fff; }'),
+						'',
+						'@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }',
+						'@keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }',
+						'@keyframes fadeIn { from{opacity:0} to{opacity:1} }',
+						'@keyframes scanline { from{top:-4px} to{top:100%} }',
+						'@keyframes drift { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }',
+						'@keyframes glitchSlice { 0%,100%{clip-path:inset(0 0 0 0)} 25%{clip-path:inset(20% 0 60% 0)} 50%{clip-path:inset(60% 0 10% 0)} 75%{clip-path:inset(40% 0 30% 0)} }',
+						'@keyframes flicker { 0%,19%,21%,23%,25%,54%,56%,100%{opacity:1} 20%,24%,55%{opacity:0.4} }',
+						'@keyframes marquee { from{transform:translateX(100%)} to{transform:translateX(-100%)} }',
+						'@keyframes accrete { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }',
+						'@keyframes termCursor { 0%,100%{opacity:1} 50%{opacity:0} }',
+						'@keyframes crtOff { 0%{transform:scaleY(1);opacity:1;filter:brightness(1)} 15%{transform:scaleY(1);opacity:1;filter:brightness(2.5)} 40%{transform:scaleY(0.005);opacity:1;filter:brightness(1)} 100%{transform:scaleY(0.005);opacity:0;filter:brightness(1)} }',
+						'@keyframes crtOn { 0%{transform:scaleY(0.005);opacity:0} 50%{transform:scaleY(1.02);opacity:1} 100%{transform:scaleY(1);opacity:1} }',
+						'.crt-off { animation: crtOff 0.5s ease forwards; }',
+						'.crt-on { animation: crtOn 0.4s ease forwards; }',
+						'',
+						'.card-link { transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease; }',
+						'.card-link:hover { border-color: ' + ($author$project$Theme$purpleA(0.5) + (' !important; box-shadow: 0 0 30px ' + ($author$project$Theme$purpleA(0.12) + (', inset 0 1px 0 ' + ($author$project$Theme$purpleA(0.1) + ' !important; transform: translateY(-4px) !important; }'))))),
+						'.card-link:hover .card-idx { color: ' + ($author$project$Theme$purpleA(0.8) + ' !important; }'),
+						'.card-link:hover .card-arrow { opacity: 1 !important; transform: translateX(4px) !important; }',
+						'.card-link:hover .card-scan { opacity: 1 !important; animation: scanline 1.5s linear infinite !important; }',
+						'',
+						'.footer-link { color: ' + ($author$project$Theme$purpleA(0.6) + ('; text-decoration: none; transition: color 0.2s; font-family: ' + ($author$project$Theme$monoFont + '; font-size: 12px; letter-spacing: 0.05em; }'))),
+						'.footer-link:hover { color: ' + ($author$project$Theme$purpleA(0.8) + '; }'),
+						'',
+						'.social-link { color: ' + ($author$project$Theme$purpleA(0.55) + '; text-decoration: none; transition: color 0.3s ease, text-shadow 0.3s ease; }'),
+						'.social-link:hover { color: ' + ($author$project$Theme$purpleA(0.9) + ('; text-shadow: 0 0 12px ' + ($author$project$Theme$purpleA(0.3) + '; }'))),
+						'',
+						'@media (max-width: 900px) {',
+						'  .section-grid { grid-template-columns: 1fr !important; }',
+						'  .section-grid .span-full { grid-column: 1 !important; }',
+						'}',
+						'',
+						'.ase-checkerboard {',
+						'  background-image: linear-gradient(45deg, #1a1a2e 25%, transparent 25%), linear-gradient(-45deg, #1a1a2e 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #1a1a2e 75%), linear-gradient(-45deg, transparent 75%, #1a1a2e 75%);',
+						'  background-size: 16px 16px;',
+						'  background-position: 0 0, 0 8px, 8px -8px, -8px 0px;',
+						'  background-color: #252540;',
+						'}',
+						'.ase-tool { width: 18px; height: 18px; border: 1px solid ' + ($author$project$Main$aseBorder + ('; background: #2a2a48; display: flex; align-items: center; justify-content: center; font-size: 9px; color: ' + ($author$project$Main$aseText + '; cursor: default; }'))),
+						'.ase-tool:hover { background: ' + ($author$project$Main$aseBorder + ('; color: ' + ($author$project$Main$aseTextBright + '; }'))),
+						'.ase-color-swatch { width: 14px; height: 14px; border: 1px solid #4a4a6c; }',
+						''
+					])))
 		]));
 var $author$project$Main$FocusPanel = function (a) {
 	return {$: 'FocusPanel', a: a};
@@ -6711,6 +6828,7 @@ var $elm$html$Html$Events$onClick = function (msg) {
 		'click',
 		$elm$json$Json$Decode$succeed(msg));
 };
+var $author$project$Theme$sansFont = '\'DM Sans\', sans-serif';
 var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
 var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
 var $author$project$Main$viewCrt = A2(
@@ -6747,6 +6865,9 @@ var $author$project$Main$viewCrt = A2(
 				]),
 			_List_Nil)
 		]));
+var $author$project$Theme$emailUrl = 'mailto:joaoarthurweber@gmail.com';
+var $author$project$Theme$githubUrl = 'https://github.com/udyweber';
+var $author$project$Theme$linkedinUrl = 'https://linkedin.com/in/joaoarthurweber';
 var $elm$html$Html$a = _VirtualDom_node('a');
 var $elm$json$Json$Encode$string = _Json_wrap;
 var $elm$html$Html$Attributes$stringProperty = F2(
@@ -6764,6 +6885,24 @@ var $elm$html$Html$Attributes$href = function (url) {
 		_VirtualDom_noJavaScriptUri(url));
 };
 var $elm$html$Html$Attributes$target = $elm$html$Html$Attributes$stringProperty('target');
+var $author$project$Main$viewFooterLink = F2(
+	function (label, url) {
+		return A2(
+			$elm$html$Html$a,
+			_List_fromArray(
+				[
+					$elm$html$Html$Attributes$class('social-link'),
+					$elm$html$Html$Attributes$href(url),
+					$elm$html$Html$Attributes$target('_blank'),
+					A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
+					A2($elm$html$Html$Attributes$style, 'font-size', '12px'),
+					A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.05em')
+				]),
+			_List_fromArray(
+				[
+					$elm$html$Html$text(label)
+				]));
+	});
 var $author$project$Main$viewFooter = A2(
 	$elm$html$Html$div,
 	_List_fromArray(
@@ -6780,7 +6919,10 @@ var $author$project$Main$viewFooter = A2(
 			$elm$html$Html$div,
 			_List_fromArray(
 				[
-					A2($elm$html$Html$Attributes$style, 'border-top', '1px solid rgba(168,85,247,0.06)'),
+					A2(
+					$elm$html$Html$Attributes$style,
+					'border-top',
+					'1px solid ' + $author$project$Theme$purpleA(0.06)),
 					A2($elm$html$Html$Attributes$style, 'padding-top', '32px'),
 					A2($elm$html$Html$Attributes$style, 'display', 'flex'),
 					A2($elm$html$Html$Attributes$style, 'justify-content', 'space-between'),
@@ -6804,67 +6946,32 @@ var $author$project$Main$viewFooter = A2(
 							$elm$html$Html$div,
 							_List_fromArray(
 								[
-									A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
+									A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
 									A2($elm$html$Html$Attributes$style, 'font-size', '12px'),
-									A2($elm$html$Html$Attributes$style, 'color', 'rgba(168,85,247,0.4)'),
+									A2(
+									$elm$html$Html$Attributes$style,
+									'color',
+									$author$project$Theme$purpleA(0.4)),
 									A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.1em')
 								]),
 							_List_fromArray(
 								[
 									$elm$html$Html$text('JAW // 2026')
 								])),
-							A2(
-							$elm$html$Html$a,
-							_List_fromArray(
-								[
-									$elm$html$Html$Attributes$class('social-link'),
-									$elm$html$Html$Attributes$href('https://github.com/joaoarthurweber'),
-									$elm$html$Html$Attributes$target('_blank'),
-									A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
-									A2($elm$html$Html$Attributes$style, 'font-size', '12px'),
-									A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.05em')
-								]),
-							_List_fromArray(
-								[
-									$elm$html$Html$text('github')
-								])),
-							A2(
-							$elm$html$Html$a,
-							_List_fromArray(
-								[
-									$elm$html$Html$Attributes$class('social-link'),
-									$elm$html$Html$Attributes$href('https://linkedin.com/in/joaoarthurweber'),
-									$elm$html$Html$Attributes$target('_blank'),
-									A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
-									A2($elm$html$Html$Attributes$style, 'font-size', '12px'),
-									A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.05em')
-								]),
-							_List_fromArray(
-								[
-									$elm$html$Html$text('linkedin')
-								])),
-							A2(
-							$elm$html$Html$a,
-							_List_fromArray(
-								[
-									$elm$html$Html$Attributes$class('social-link'),
-									$elm$html$Html$Attributes$href('mailto:joaoarthurweber@gmail.com'),
-									A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
-									A2($elm$html$Html$Attributes$style, 'font-size', '12px'),
-									A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.05em')
-								]),
-							_List_fromArray(
-								[
-									$elm$html$Html$text('email')
-								]))
+							A2($author$project$Main$viewFooterLink, 'github', $author$project$Theme$githubUrl),
+							A2($author$project$Main$viewFooterLink, 'linkedin', $author$project$Theme$linkedinUrl),
+							A2($author$project$Main$viewFooterLink, 'email', $author$project$Theme$emailUrl)
 						])),
 					A2(
 					$elm$html$Html$div,
 					_List_fromArray(
 						[
-							A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
+							A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
 							A2($elm$html$Html$Attributes$style, 'font-size', '12px'),
-							A2($elm$html$Html$Attributes$style, 'color', 'rgba(168,85,247,0.35)')
+							A2(
+							$elm$html$Html$Attributes$style,
+							'color',
+							$author$project$Theme$purpleA(0.35))
 						]),
 					_List_fromArray(
 						[
@@ -6881,7 +6988,10 @@ var $author$project$Main$viewGridFloor = A2(
 			A2($elm$html$Html$Attributes$style, 'left', '-10%'),
 			A2($elm$html$Html$Attributes$style, 'width', '120%'),
 			A2($elm$html$Html$Attributes$style, 'height', '45vh'),
-			A2($elm$html$Html$Attributes$style, 'background-image', 'linear-gradient(rgba(168,85,247,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(168,85,247,0.04) 1px, transparent 1px)'),
+			A2(
+			$elm$html$Html$Attributes$style,
+			'background-image',
+			'linear-gradient(' + ($author$project$Theme$purpleA(0.04) + (' 1px, transparent 1px), linear-gradient(90deg, ' + ($author$project$Theme$purpleA(0.04) + ' 1px, transparent 1px)')))),
 			A2($elm$html$Html$Attributes$style, 'background-size', '70px 70px'),
 			A2($elm$html$Html$Attributes$style, 'transform', 'perspective(400px) rotateX(55deg)'),
 			A2($elm$html$Html$Attributes$style, 'transform-origin', 'center bottom'),
@@ -6889,6 +6999,59 @@ var $author$project$Main$viewGridFloor = A2(
 			A2($elm$html$Html$Attributes$style, '-webkit-mask-image', 'linear-gradient(to top, rgba(0,0,0,0.3) 0%, transparent 70%)')
 		]),
 	_List_Nil);
+var $author$project$Main$viewHeroBio = A2(
+	$elm$html$Html$div,
+	_List_fromArray(
+		[
+			A2($elm$html$Html$Attributes$style, 'max-width', '540px'),
+			A2($elm$html$Html$Attributes$style, 'margin', '24px auto 0'),
+			A2($elm$html$Html$Attributes$style, 'font-size', '15px'),
+			A2($elm$html$Html$Attributes$style, 'color', 'rgba(196,195,200,0.8)'),
+			A2($elm$html$Html$Attributes$style, 'line-height', '1.7'),
+			A2($elm$html$Html$Attributes$style, 'text-align', 'center'),
+			A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.01em'),
+			A2($elm$html$Html$Attributes$style, 'animation', 'fadeIn 1s ease 1.0s both')
+		]),
+	_List_fromArray(
+		[
+			$elm$html$Html$text('Software developer, enamoured with learning programming languages and weird tech, with an estrange appeal for distributed systems and Rust — always enhancing my craft and looking for problems to solve. When I\'m not buried in code (on neovim btw), you\'ll find me drawing pixel art (with far more enthusiasm than skill), singing my heart out to whatever song is stuck in my head, or diving into some obscure technology rabbit hole just because it looked interesting. I believe the best way to learn is to build things that probably shouldn\'t exist.')
+		]));
+var $author$project$Main$viewHeroPrompt = A2(
+	$elm$html$Html$div,
+	_List_fromArray(
+		[
+			A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
+			A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
+			A2(
+			$elm$html$Html$Attributes$style,
+			'color',
+			$author$project$Theme$purpleA(0.6)),
+			A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.15em'),
+			A2($elm$html$Html$Attributes$style, 'margin-bottom', '32px'),
+			A2($elm$html$Html$Attributes$style, 'animation', 'fadeIn 1s ease 0.3s both')
+		]),
+	_List_fromArray(
+		[
+			$elm$html$Html$text('visitor@jaw ~ $ whoami')
+		]));
+var $author$project$Main$viewHeroScrollHint = A2(
+	$elm$html$Html$div,
+	_List_fromArray(
+		[
+			A2($elm$html$Html$Attributes$style, 'margin-top', '48px'),
+			A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
+			A2($elm$html$Html$Attributes$style, 'font-size', '12px'),
+			A2(
+			$elm$html$Html$Attributes$style,
+			'color',
+			$author$project$Theme$purpleA(0.4)),
+			A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.2em'),
+			A2($elm$html$Html$Attributes$style, 'animation', 'fadeIn 1s ease 1.4s both, drift 3s ease infinite 2s')
+		]),
+	_List_fromArray(
+		[
+			$elm$html$Html$text('[ scroll ]')
+		]));
 var $author$project$Main$viewSocialLink = F2(
 	function (label, url) {
 		return A2(
@@ -6898,7 +7061,7 @@ var $author$project$Main$viewSocialLink = F2(
 					$elm$html$Html$Attributes$class('social-link'),
 					$elm$html$Html$Attributes$href(url),
 					$elm$html$Html$Attributes$target('_blank'),
-					A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
+					A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
 					A2($elm$html$Html$Attributes$style, 'font-size', '12px'),
 					A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.15em'),
 					A2($elm$html$Html$Attributes$style, 'text-transform', 'uppercase')
@@ -6908,6 +7071,146 @@ var $author$project$Main$viewSocialLink = F2(
 					$elm$html$Html$text(label)
 				]));
 	});
+var $author$project$Main$viewHeroSocials = A2(
+	$elm$html$Html$div,
+	_List_fromArray(
+		[
+			A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+			A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+			A2($elm$html$Html$Attributes$style, 'justify-content', 'center'),
+			A2($elm$html$Html$Attributes$style, 'gap', '24px'),
+			A2($elm$html$Html$Attributes$style, 'margin-top', '24px'),
+			A2($elm$html$Html$Attributes$style, 'animation', 'fadeIn 1s ease 1.1s both')
+		]),
+	_List_fromArray(
+		[
+			A2($author$project$Main$viewSocialLink, 'github', $author$project$Theme$githubUrl),
+			A2($author$project$Main$viewSocialLink, 'linkedin', $author$project$Theme$linkedinUrl),
+			A2($author$project$Main$viewSocialLink, 'email', $author$project$Theme$emailUrl)
+		]));
+var $author$project$Theme$textLight = '#eeedf0';
+var $author$project$Main$viewHeroTitle = A2(
+	$elm$html$Html$div,
+	_List_fromArray(
+		[
+			A2($elm$html$Html$Attributes$style, 'position', 'relative'),
+			A2($elm$html$Html$Attributes$style, 'display', 'inline-block')
+		]),
+	_List_fromArray(
+		[
+			A2(
+			$elm$html$Html$div,
+			_List_fromArray(
+				[
+					A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
+					A2($elm$html$Html$Attributes$style, 'font-size', 'clamp(80px, 16vw, 220px)'),
+					A2($elm$html$Html$Attributes$style, 'font-weight', '700'),
+					A2(
+					$elm$html$Html$Attributes$style,
+					'color',
+					$author$project$Theme$purpleA(0.08)),
+					A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.3em'),
+					A2($elm$html$Html$Attributes$style, 'line-height', '0.9'),
+					A2($elm$html$Html$Attributes$style, 'position', 'absolute'),
+					A2($elm$html$Html$Attributes$style, 'top', '4px'),
+					A2($elm$html$Html$Attributes$style, 'left', '4px'),
+					A2($elm$html$Html$Attributes$style, 'user-select', 'none'),
+					A2($elm$html$Html$Attributes$style, 'animation', 'glitchSlice 8s steps(1) infinite 3s')
+				]),
+			_List_fromArray(
+				[
+					$elm$html$Html$text('JAW')
+				])),
+			A2(
+			$elm$html$Html$div,
+			_List_fromArray(
+				[
+					A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
+					A2($elm$html$Html$Attributes$style, 'font-size', 'clamp(80px, 16vw, 220px)'),
+					A2($elm$html$Html$Attributes$style, 'font-weight', '700'),
+					A2($elm$html$Html$Attributes$style, 'color', $author$project$Theme$textLight),
+					A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.3em'),
+					A2($elm$html$Html$Attributes$style, 'line-height', '0.9'),
+					A2($elm$html$Html$Attributes$style, 'position', 'relative'),
+					A2($elm$html$Html$Attributes$style, 'user-select', 'none'),
+					A2(
+					$elm$html$Html$Attributes$style,
+					'text-shadow',
+					'0 0 80px ' + ($author$project$Theme$purpleA(0.2) + (', 0 0 160px ' + $author$project$Theme$purpleA(0.05)))),
+					A2($elm$html$Html$Attributes$style, 'animation', 'flicker 10s ease infinite 2s')
+				]),
+			_List_fromArray(
+				[
+					$elm$html$Html$text('JAW')
+				])),
+			A2(
+			$elm$html$Html$div,
+			_List_fromArray(
+				[
+					A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+					A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+					A2($elm$html$Html$Attributes$style, 'justify-content', 'center'),
+					A2($elm$html$Html$Attributes$style, 'gap', '8px'),
+					A2($elm$html$Html$Attributes$style, 'margin-top', '28px'),
+					A2($elm$html$Html$Attributes$style, 'animation', 'fadeIn 1s ease 0.8s both')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'width', '40px'),
+							A2($elm$html$Html$Attributes$style, 'height', '1px'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'background',
+							$author$project$Theme$purpleA(0.2))
+						]),
+					_List_Nil),
+					A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
+							A2($elm$html$Html$Attributes$style, 'font-size', '14px'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'color',
+							$author$project$Theme$purpleA(0.7)),
+							A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.3em')
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text('JOAO ARTHUR WEBER')
+						])),
+					A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'width', '8px'),
+							A2($elm$html$Html$Attributes$style, 'height', '16px'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'background',
+							$author$project$Theme$purpleA(0.6)),
+							A2($elm$html$Html$Attributes$style, 'animation', 'blink 1s steps(1) infinite')
+						]),
+					_List_Nil),
+					A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'width', '40px'),
+							A2($elm$html$Html$Attributes$style, 'height', '1px'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'background',
+							$author$project$Theme$purpleA(0.2))
+						]),
+					_List_Nil)
+				]))
+		]));
 var $author$project$Main$viewHero = A2(
 	$elm$html$Html$div,
 	_List_fromArray(
@@ -6934,176 +7237,7 @@ var $author$project$Main$viewHero = A2(
 					A2($elm$html$Html$Attributes$style, 'animation', 'fadeUp 1.2s cubic-bezier(0.16,1,0.3,1) forwards')
 				]),
 			_List_fromArray(
-				[
-					A2(
-					$elm$html$Html$div,
-					_List_fromArray(
-						[
-							A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
-							A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
-							A2($elm$html$Html$Attributes$style, 'color', 'rgba(168,85,247,0.6)'),
-							A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.15em'),
-							A2($elm$html$Html$Attributes$style, 'margin-bottom', '32px'),
-							A2($elm$html$Html$Attributes$style, 'animation', 'fadeIn 1s ease 0.3s both')
-						]),
-					_List_fromArray(
-						[
-							$elm$html$Html$text('visitor@jaw ~ $ whoami')
-						])),
-					A2(
-					$elm$html$Html$div,
-					_List_fromArray(
-						[
-							A2($elm$html$Html$Attributes$style, 'position', 'relative'),
-							A2($elm$html$Html$Attributes$style, 'display', 'inline-block')
-						]),
-					_List_fromArray(
-						[
-							A2(
-							$elm$html$Html$div,
-							_List_fromArray(
-								[
-									A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
-									A2($elm$html$Html$Attributes$style, 'font-size', 'clamp(80px, 16vw, 220px)'),
-									A2($elm$html$Html$Attributes$style, 'font-weight', '700'),
-									A2($elm$html$Html$Attributes$style, 'color', 'rgba(168,85,247,0.08)'),
-									A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.3em'),
-									A2($elm$html$Html$Attributes$style, 'line-height', '0.9'),
-									A2($elm$html$Html$Attributes$style, 'position', 'absolute'),
-									A2($elm$html$Html$Attributes$style, 'top', '4px'),
-									A2($elm$html$Html$Attributes$style, 'left', '4px'),
-									A2($elm$html$Html$Attributes$style, 'user-select', 'none'),
-									A2($elm$html$Html$Attributes$style, 'animation', 'glitchSlice 8s steps(1) infinite 3s')
-								]),
-							_List_fromArray(
-								[
-									$elm$html$Html$text('JAW')
-								])),
-							A2(
-							$elm$html$Html$div,
-							_List_fromArray(
-								[
-									A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
-									A2($elm$html$Html$Attributes$style, 'font-size', 'clamp(80px, 16vw, 220px)'),
-									A2($elm$html$Html$Attributes$style, 'font-weight', '700'),
-									A2($elm$html$Html$Attributes$style, 'color', '#eeedf0'),
-									A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.3em'),
-									A2($elm$html$Html$Attributes$style, 'line-height', '0.9'),
-									A2($elm$html$Html$Attributes$style, 'position', 'relative'),
-									A2($elm$html$Html$Attributes$style, 'user-select', 'none'),
-									A2($elm$html$Html$Attributes$style, 'text-shadow', '0 0 80px rgba(168,85,247,0.2), 0 0 160px rgba(168,85,247,0.05)'),
-									A2($elm$html$Html$Attributes$style, 'animation', 'flicker 10s ease infinite 2s')
-								]),
-							_List_fromArray(
-								[
-									$elm$html$Html$text('JAW')
-								]))
-						])),
-					A2(
-					$elm$html$Html$div,
-					_List_fromArray(
-						[
-							A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-							A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-							A2($elm$html$Html$Attributes$style, 'justify-content', 'center'),
-							A2($elm$html$Html$Attributes$style, 'gap', '8px'),
-							A2($elm$html$Html$Attributes$style, 'margin-top', '28px'),
-							A2($elm$html$Html$Attributes$style, 'animation', 'fadeIn 1s ease 0.8s both')
-						]),
-					_List_fromArray(
-						[
-							A2(
-							$elm$html$Html$div,
-							_List_fromArray(
-								[
-									A2($elm$html$Html$Attributes$style, 'width', '40px'),
-									A2($elm$html$Html$Attributes$style, 'height', '1px'),
-									A2($elm$html$Html$Attributes$style, 'background', 'rgba(168,85,247,0.2)')
-								]),
-							_List_Nil),
-							A2(
-							$elm$html$Html$div,
-							_List_fromArray(
-								[
-									A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
-									A2($elm$html$Html$Attributes$style, 'font-size', '14px'),
-									A2($elm$html$Html$Attributes$style, 'color', 'rgba(168,85,247,0.7)'),
-									A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.3em')
-								]),
-							_List_fromArray(
-								[
-									$elm$html$Html$text('JOAO ARTHUR WEBER')
-								])),
-							A2(
-							$elm$html$Html$div,
-							_List_fromArray(
-								[
-									A2($elm$html$Html$Attributes$style, 'width', '8px'),
-									A2($elm$html$Html$Attributes$style, 'height', '16px'),
-									A2($elm$html$Html$Attributes$style, 'background', 'rgba(168,85,247,0.6)'),
-									A2($elm$html$Html$Attributes$style, 'animation', 'blink 1s steps(1) infinite')
-								]),
-							_List_Nil),
-							A2(
-							$elm$html$Html$div,
-							_List_fromArray(
-								[
-									A2($elm$html$Html$Attributes$style, 'width', '40px'),
-									A2($elm$html$Html$Attributes$style, 'height', '1px'),
-									A2($elm$html$Html$Attributes$style, 'background', 'rgba(168,85,247,0.2)')
-								]),
-							_List_Nil)
-						])),
-					A2(
-					$elm$html$Html$div,
-					_List_fromArray(
-						[
-							A2($elm$html$Html$Attributes$style, 'max-width', '540px'),
-							A2($elm$html$Html$Attributes$style, 'margin', '24px auto 0'),
-							A2($elm$html$Html$Attributes$style, 'font-size', '15px'),
-							A2($elm$html$Html$Attributes$style, 'color', 'rgba(196,195,200,0.8)'),
-							A2($elm$html$Html$Attributes$style, 'line-height', '1.7'),
-							A2($elm$html$Html$Attributes$style, 'text-align', 'center'),
-							A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.01em'),
-							A2($elm$html$Html$Attributes$style, 'animation', 'fadeIn 1s ease 1.0s both')
-						]),
-					_List_fromArray(
-						[
-							$elm$html$Html$text('Software developer, enamoured with learning programming languages and weird tech, with an estrange appeal for distributed systems and Rust — always enhancing my craft and looking for problems to solve. When I\'m not buried in code (on neovim btw), you\'ll find me drawing pixel art (with far more enthusiasm than skill), singing my heart out to whatever song is stuck in my head, or diving into some obscure technology rabbit hole just because it looked interesting. I believe the best way to learn is to build things that probably shouldn\'t exist.')
-						])),
-					A2(
-					$elm$html$Html$div,
-					_List_fromArray(
-						[
-							A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-							A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-							A2($elm$html$Html$Attributes$style, 'justify-content', 'center'),
-							A2($elm$html$Html$Attributes$style, 'gap', '24px'),
-							A2($elm$html$Html$Attributes$style, 'margin-top', '24px'),
-							A2($elm$html$Html$Attributes$style, 'animation', 'fadeIn 1s ease 1.1s both')
-						]),
-					_List_fromArray(
-						[
-							A2($author$project$Main$viewSocialLink, 'github', 'https://github.com/joaoarthurweber'),
-							A2($author$project$Main$viewSocialLink, 'linkedin', 'https://linkedin.com/in/joaoarthurweber'),
-							A2($author$project$Main$viewSocialLink, 'email', 'mailto:joaoarthurweber@gmail.com')
-						])),
-					A2(
-					$elm$html$Html$div,
-					_List_fromArray(
-						[
-							A2($elm$html$Html$Attributes$style, 'margin-top', '48px'),
-							A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
-							A2($elm$html$Html$Attributes$style, 'font-size', '12px'),
-							A2($elm$html$Html$Attributes$style, 'color', 'rgba(168,85,247,0.4)'),
-							A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.2em'),
-							A2($elm$html$Html$Attributes$style, 'animation', 'fadeIn 1s ease 1.4s both, drift 3s ease infinite 2s')
-						]),
-					_List_fromArray(
-						[
-							$elm$html$Html$text('[ scroll ]')
-						]))
-				]))
+				[$author$project$Main$viewHeroPrompt, $author$project$Main$viewHeroTitle, $author$project$Main$viewHeroBio, $author$project$Main$viewHeroSocials, $author$project$Main$viewHeroScrollHint]))
 		]));
 var $author$project$Main$ToggleCard = function (a) {
 	return {$: 'ToggleCard', a: a};
@@ -7116,58 +7250,68 @@ var $author$project$Cards$crystalData = _List_fromArray(
 		{
 		category: $author$project$Cards$Experience,
 		details: _List_fromArray(
-			['Developed and maintained a platform for data replication jobs using Apache Spark', 'Introduced Just, UV and Apache Datafusion to the team', 'Improved team performance enhancing dev experience and onboarding', 'Reduced code complexity leveraging Java functional features and data oriented design', 'Implemented end-to-end integration tests using dev containers']),
-		org: 'SAP Latin America // Datasphere Spark Replication',
+			['Leveraging Rust to develop high resilient microservices and infrastructure for Data Processing Jobs', 'Applying data oriented design principles to build efficient and maintainable codebase for distributed systems', 'Collaborating with cross-functional teams to design and implement scalable solutions for data challenges', 'Implementing production ready performant solutions using Rust with Kafka for reactive event driven data pipelines', 'Bringing innovative solutions and building tools to improve developers experience and satisfaction']),
+		org: 'SAP Latin America // Kings',
 		period: '2025 - present',
-		summary: 'Data replication platform using Apache Spark with Java and modern tooling.',
+		summary: 'High-resilience microservices and data pipelines in Rust with Kafka.',
+		title: 'Platform Developer'
+	},
+		{
+		category: $author$project$Cards$Experience,
+		details: _List_fromArray(
+			['Maintained and evolved Python-based data replication pipelines running on Apache Spark', 'Introduced Just, UV and Apache DataFusion to streamline builds and local development', 'Improved onboarding and day-to-day developer experience across the team', 'Reduced code complexity by leveraging Java functional features and data-oriented design', 'Implemented end-to-end integration tests using dev containers for reliable CI validation']),
+		org: 'SAP Latin America // Datasphere Spark Replication',
+		period: '2025',
+		summary: 'Maintained Spark data replication pipelines while modernizing developer tooling and workflows.',
 		title: 'Software Developer'
 	},
 		{
 		category: $author$project$Cards$Experience,
 		details: _List_fromArray(
-			['Improved dev experience introducing new tools and automations', 'Introduced strict code linting with Ruff, Mypy and Pyrefly', 'Added strict typing for better maintainability', 'Implemented CheckMarxOne security scan reports for auditing', 'Refactored legacy code using Pydantic and modern Python features']),
+			['Maintained an inner-source compliance evaluation tool integrated into CI/CD pipelines', 'Enforced strict code quality with Ruff, Mypy and Pyrefly linting', 'Introduced full type coverage with Pydantic models for better maintainability', 'Implemented CheckMarxOne security scan report aggregation for centralized auditing', 'Refactored legacy modules using modern Python patterns and tooling']),
 		org: 'SAP Latin America // Hermes',
 		period: '2024 - present',
-		summary: 'Maintained inner source project with strict typing, linting and security tooling.',
+		summary: 'CI/CD compliance tool that aggregates vulnerability scans across projects for audit reporting.',
 		title: 'Inner Source Maintainer'
 	},
 		{
 		category: $author$project$Cards$Experience,
 		details: _List_fromArray(
-			['Optimized backend queries providing SQL performance insights to coworkers', 'Delivered backend APIs for multi-tenant environment migration tool', 'Collaborated in code review ensuring best practices', 'Delivered UI and Backend tests using JUnit5, Mockito and Selenium']),
+			['Developed backend APIs for migrating client data from legacy environments to a new K8s-based platform', 'Optimized SQL queries and shared performance insights with the team', 'Participated in code reviews enforcing best practices and consistency', 'Delivered UI and backend test suites using JUnit5, Mockito and Selenium']),
 		org: 'SAP Latin America // CIDS',
 		period: '2024',
-		summary: 'Backend APIs and multi-tenant migration tooling with performance-focused SQL.',
+		summary: 'Built migration APIs to move client data from legacy systems to a Kubernetes-based platform.',
 		title: 'Software Developer'
 	},
 		{
 		category: $author$project$Cards$Education,
 		details: _List_fromArray(
-			['Analysis and Application of Operating Systems', 'Data Structures and Algorithms', 'Digital Systems Design', 'Low Level Programming using C for Linux', 'Basic UML design concepts and Business Logic']),
+			['OS internals — process scheduling, memory management, kernel design and system calls', 'Algorithms and data structures — complexity analysis, graphs, trees and sorting', 'Digital systems — logic design, CPU architecture and hardware-software interfaces', 'Low-level programming — C on Linux, pointers, manual memory management and syscalls', 'Software design — UML modeling, requirements analysis and business logic patterns']),
 		org: 'Universidade do Vale dos Sinos',
 		period: '2023 - 2027',
-		summary: 'Undergraduate focusing on systems programming, algorithms and OS design.',
+		summary: 'Undergraduate degree with emphasis on systems programming, algorithms and OS internals.',
 		title: 'B.Sc Computer Science'
 	},
 		{
 		category: $author$project$Cards$Project,
 		details: _List_fromArray(
-			['Parametrizable properties for custom simulations', 'HUE color changing effect based on current tick', 'Mouse interaction to spawn particles on click and drag', '1D array optimization for falling and stacking physics']),
+			['Configurable particle properties for custom simulation behaviors', 'Real-time hue-cycling color effect driven by the simulation tick', 'Click-and-drag mouse interaction for spawning particles', 'Flat 1D array grid with optimized falling and stacking physics']),
 		org: 'C++ / SDL2',
 		period: '2025',
-		summary: 'Graphic simulation of falling sand with mouse interaction and color effects.',
+		summary: 'Pixel-based falling sand simulation with real-time mouse interaction and hue-cycling visuals.',
 		title: 'Sand Simulator'
 	},
 		{
 		category: $author$project$Cards$Project,
 		details: _List_fromArray(
-			['Background keylogging via Windows syscalls', 'Screenshot capture on every Enter key press', 'Discord integration for real-time log + screenshot delivery', 'Background process using fork and detached Windows processes']),
+			['Low-level keylogging through direct Windows syscalls', 'Automatic screenshot capture triggered on Enter key press', 'Real-time log and screenshot delivery via Discord webhook integration', 'Stealth execution using forked and detached background processes']),
 		org: 'Go / Educational',
 		period: '2024',
-		summary: 'Educational keylogger and screenshot tool with real-time Discord integration.',
+		summary: 'Educational security tool demonstrating keylogging, screen capture and remote exfiltration.',
 		title: 'Spylogger'
 	}
 	]);
+var $elm$html$Html$Attributes$id = $elm$html$Html$Attributes$stringProperty('id');
 var $elm$virtual_dom$VirtualDom$MayStopPropagation = function (a) {
 	return {$: 'MayStopPropagation', a: a};
 };
@@ -7178,6 +7322,7 @@ var $elm$html$Html$Events$stopPropagationOn = F2(
 			event,
 			$elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
 	});
+var $author$project$Main$aseBg = '#232338';
 var $elm$html$Html$img = _VirtualDom_node('img');
 var $elm$html$Html$Attributes$src = function (url) {
 	return A2(
@@ -7185,21 +7330,108 @@ var $elm$html$Html$Attributes$src = function (url) {
 		'src',
 		_VirtualDom_noJavaScriptOrHtmlUri(url));
 };
-var $author$project$Main$viewAsepritePanel = F5(
-	function (filename, imagePath, width, height, selectedFrame) {
-		var aseTextBright = '#bbbbdd';
-		var aseText = '#8888aa';
-		var aseHighlight = '#5c5c8a';
-		var aseBorder = '#3a3a5c';
-		var aseBg = '#232338';
+var $author$project$Main$viewAseCanvas = function (imagePath) {
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'flex', '1'),
+				A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+				A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+				A2($elm$html$Html$Attributes$style, 'justify-content', 'center'),
+				A2($elm$html$Html$Attributes$style, 'min-height', '300px'),
+				$elm$html$Html$Attributes$class('ase-checkerboard'),
+				A2($elm$html$Html$Attributes$style, 'position', 'relative')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$img,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$src('assets/' + imagePath),
+						A2($elm$html$Html$Attributes$style, 'image-rendering', 'pixelated'),
+						A2($elm$html$Html$Attributes$style, 'image-rendering', 'crisp-edges'),
+						A2($elm$html$Html$Attributes$style, 'max-width', '90%'),
+						A2($elm$html$Html$Attributes$style, 'max-height', '280px'),
+						A2($elm$html$Html$Attributes$style, 'object-fit', 'contain')
+					]),
+				_List_Nil)
+			]));
+};
+var $author$project$Main$aseMenuBg = '#282845';
+var $author$project$Main$viewAseMenuBar = A2(
+	$elm$html$Html$div,
+	_List_fromArray(
+		[
+			A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+			A2($elm$html$Html$Attributes$style, 'gap', '0'),
+			A2($elm$html$Html$Attributes$style, 'padding', '2px 4px'),
+			A2($elm$html$Html$Attributes$style, 'background', $author$project$Main$aseMenuBg),
+			A2($elm$html$Html$Attributes$style, 'border-bottom', '1px solid ' + $author$project$Main$aseBorder)
+		]),
+	A2(
+		$elm$core$List$map,
+		function (item) {
+			return A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
+						A2($elm$html$Html$Attributes$style, 'font-size', '9px'),
+						A2($elm$html$Html$Attributes$style, 'color', $author$project$Main$aseText),
+						A2($elm$html$Html$Attributes$style, 'padding', '2px 8px')
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text(item)
+					]));
+		},
+		_List_fromArray(
+			['File', 'Edit', 'Sprite', 'Layer', 'Frame', 'Select', 'View'])));
+var $author$project$Main$asePaletteBg = '#1a1a30';
+var $author$project$Main$viewAsePalette = A2(
+	$elm$html$Html$div,
+	_List_fromArray(
+		[
+			A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+			A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+			A2($elm$html$Html$Attributes$style, 'padding', '4px 6px'),
+			A2($elm$html$Html$Attributes$style, 'gap', '2px'),
+			A2($elm$html$Html$Attributes$style, 'background', $author$project$Main$asePaletteBg),
+			A2($elm$html$Html$Attributes$style, 'border-top', '1px solid ' + $author$project$Main$aseBorder),
+			A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap')
+		]),
+	A2(
+		$elm$core$List$map,
+		function (color) {
+			return A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'width', '10px'),
+						A2($elm$html$Html$Attributes$style, 'height', '10px'),
+						A2($elm$html$Html$Attributes$style, 'background', color),
+						A2($elm$html$Html$Attributes$style, 'border', '1px solid rgba(255,255,255,0.06)')
+					]),
+				_List_Nil);
+		},
+		_List_fromArray(
+			['#000000', '#1a1a2e', '#2a2a48', '#3a3a5c', '#5c5c8a', '#8888aa', '#bbbbdd', '#eeedf0', '#a855f7', '#7c3aed', '#6d28d9', '#5b21b6', '#d946ef', '#c026d3', '#a21caf', '#86198f', '#3b82f6', '#2563eb', '#1d4ed8', '#1e40af', '#ef4444', '#dc2626', '#b91c1c', '#991b1b', '#f59e0b', '#d97706', '#b45309', '#92400e', '#22c55e', '#16a34a', '#15803d', '#166534'])));
+var $author$project$Main$aseHighlight = '#5c5c8a';
+var $author$project$Main$aseTitleBg = '#1e1e32';
+var $author$project$Main$viewAseTimeline = F3(
+	function (width, height, selectedFrame) {
 		return A2(
 			$elm$html$Html$div,
 			_List_fromArray(
 				[
-					A2($elm$html$Html$Attributes$style, 'border', '1px solid ' + aseBorder),
-					A2($elm$html$Html$Attributes$style, 'background', aseBg),
-					A2($elm$html$Html$Attributes$style, 'overflow', 'hidden'),
-					A2($elm$html$Html$Attributes$style, 'animation', 'fadeUp 0.6s ease 0.4s both')
+					A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+					A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+					A2($elm$html$Html$Attributes$style, 'justify-content', 'space-between'),
+					A2($elm$html$Html$Attributes$style, 'padding', '3px 8px'),
+					A2($elm$html$Html$Attributes$style, 'background', $author$project$Main$aseTitleBg),
+					A2($elm$html$Html$Attributes$style, 'border-top', '1px solid ' + $author$project$Main$aseBorder)
 				]),
 			_List_fromArray(
 				[
@@ -7209,10 +7441,7 @@ var $author$project$Main$viewAsepritePanel = F5(
 						[
 							A2($elm$html$Html$Attributes$style, 'display', 'flex'),
 							A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-							A2($elm$html$Html$Attributes$style, 'justify-content', 'space-between'),
-							A2($elm$html$Html$Attributes$style, 'padding', '4px 8px'),
-							A2($elm$html$Html$Attributes$style, 'background', '#1e1e32'),
-							A2($elm$html$Html$Attributes$style, 'border-bottom', '1px solid ' + aseBorder)
+							A2($elm$html$Html$Attributes$style, 'gap', '12px')
 						]),
 					_List_fromArray(
 						[
@@ -7220,9 +7449,9 @@ var $author$project$Main$viewAsepritePanel = F5(
 							$elm$html$Html$div,
 							_List_fromArray(
 								[
-									A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-									A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-									A2($elm$html$Html$Attributes$style, 'gap', '8px')
+									A2($elm$html$Html$Attributes$style, 'position', 'relative'),
+									A2($elm$html$Html$Attributes$style, 'width', '24px'),
+									A2($elm$html$Html$Attributes$style, 'height', '24px')
 								]),
 							_List_fromArray(
 								[
@@ -7230,295 +7459,37 @@ var $author$project$Main$viewAsepritePanel = F5(
 									$elm$html$Html$div,
 									_List_fromArray(
 										[
-											A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
-											A2($elm$html$Html$Attributes$style, 'font-size', '9px'),
-											A2($elm$html$Html$Attributes$style, 'color', aseTextBright),
-											A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.05em')
+											$elm$html$Html$Attributes$class('ase-color-swatch'),
+											A2($elm$html$Html$Attributes$style, 'position', 'absolute'),
+											A2($elm$html$Html$Attributes$style, 'bottom', '0'),
+											A2($elm$html$Html$Attributes$style, 'right', '0'),
+											A2($elm$html$Html$Attributes$style, 'background', $author$project$Theme$textLight)
 										]),
-									_List_fromArray(
-										[
-											$elm$html$Html$text('Aseprite - ' + filename)
-										]))
-								])),
-							A2(
-							$elm$html$Html$div,
-							_List_fromArray(
-								[
-									A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-									A2($elm$html$Html$Attributes$style, 'gap', '4px')
-								]),
-							_List_fromArray(
-								[
+									_List_Nil),
 									A2(
 									$elm$html$Html$div,
 									_List_fromArray(
 										[
-											A2($elm$html$Html$Attributes$style, 'width', '10px'),
-											A2($elm$html$Html$Attributes$style, 'height', '10px'),
-											A2($elm$html$Html$Attributes$style, 'border', '1px solid ' + aseBorder),
-											A2($elm$html$Html$Attributes$style, 'font-size', '7px'),
-											A2($elm$html$Html$Attributes$style, 'color', aseText),
-											A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-											A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-											A2($elm$html$Html$Attributes$style, 'justify-content', 'center')
-										]),
-									_List_fromArray(
-										[
-											$elm$html$Html$text('_')
-										])),
-									A2(
-									$elm$html$Html$div,
-									_List_fromArray(
-										[
-											A2($elm$html$Html$Attributes$style, 'width', '10px'),
-											A2($elm$html$Html$Attributes$style, 'height', '10px'),
-											A2($elm$html$Html$Attributes$style, 'border', '1px solid ' + aseBorder),
-											A2($elm$html$Html$Attributes$style, 'font-size', '7px'),
-											A2($elm$html$Html$Attributes$style, 'color', aseText),
-											A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-											A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-											A2($elm$html$Html$Attributes$style, 'justify-content', 'center')
-										]),
-									_List_fromArray(
-										[
-											$elm$html$Html$text('□')
-										])),
-									A2(
-									$elm$html$Html$div,
-									_List_fromArray(
-										[
-											A2($elm$html$Html$Attributes$style, 'width', '10px'),
-											A2($elm$html$Html$Attributes$style, 'height', '10px'),
-											A2($elm$html$Html$Attributes$style, 'border', '1px solid ' + aseBorder),
-											A2($elm$html$Html$Attributes$style, 'font-size', '7px'),
-											A2($elm$html$Html$Attributes$style, 'color', aseText),
-											A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-											A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-											A2($elm$html$Html$Attributes$style, 'justify-content', 'center')
-										]),
-									_List_fromArray(
-										[
-											$elm$html$Html$text('x')
-										]))
-								]))
-						])),
-					A2(
-					$elm$html$Html$div,
-					_List_fromArray(
-						[
-							A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-							A2($elm$html$Html$Attributes$style, 'gap', '0'),
-							A2($elm$html$Html$Attributes$style, 'padding', '2px 4px'),
-							A2($elm$html$Html$Attributes$style, 'background', '#282845'),
-							A2($elm$html$Html$Attributes$style, 'border-bottom', '1px solid ' + aseBorder)
-						]),
-					A2(
-						$elm$core$List$map,
-						function (item) {
-							return A2(
-								$elm$html$Html$div,
-								_List_fromArray(
-									[
-										A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
-										A2($elm$html$Html$Attributes$style, 'font-size', '9px'),
-										A2($elm$html$Html$Attributes$style, 'color', aseText),
-										A2($elm$html$Html$Attributes$style, 'padding', '2px 8px')
-									]),
-								_List_fromArray(
-									[
-										$elm$html$Html$text(item)
-									]));
-						},
-						_List_fromArray(
-							['File', 'Edit', 'Sprite', 'Layer', 'Frame', 'Select', 'View']))),
-					A2(
-					$elm$html$Html$div,
-					_List_fromArray(
-						[
-							A2($elm$html$Html$Attributes$style, 'display', 'flex')
-						]),
-					_List_fromArray(
-						[
-							A2(
-							$elm$html$Html$div,
-							_List_fromArray(
-								[
-									A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-									A2($elm$html$Html$Attributes$style, 'flex-direction', 'column'),
-									A2($elm$html$Html$Attributes$style, 'gap', '1px'),
-									A2($elm$html$Html$Attributes$style, 'padding', '4px 3px'),
-									A2($elm$html$Html$Attributes$style, 'background', '#262642'),
-									A2($elm$html$Html$Attributes$style, 'border-right', '1px solid ' + aseBorder)
-								]),
-							A2(
-								$elm$core$List$map,
-								function (icon) {
-									return A2(
-										$elm$html$Html$div,
-										_List_fromArray(
-											[
-												$elm$html$Html$Attributes$class('ase-tool')
-											]),
-										_List_fromArray(
-											[
-												$elm$html$Html$text(icon)
-											]));
-								},
-								_List_fromArray(
-									['✎', '◉', '▬', '◇', '⬚', '✦', '◫', '⊘', '↔', '▲']))),
-							A2(
-							$elm$html$Html$div,
-							_List_fromArray(
-								[
-									A2($elm$html$Html$Attributes$style, 'flex', '1'),
-									A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-									A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-									A2($elm$html$Html$Attributes$style, 'justify-content', 'center'),
-									A2($elm$html$Html$Attributes$style, 'min-height', '300px'),
-									$elm$html$Html$Attributes$class('ase-checkerboard'),
-									A2($elm$html$Html$Attributes$style, 'position', 'relative')
-								]),
-							_List_fromArray(
-								[
-									A2(
-									$elm$html$Html$img,
-									_List_fromArray(
-										[
-											$elm$html$Html$Attributes$src('assets/' + imagePath),
-											A2($elm$html$Html$Attributes$style, 'image-rendering', 'pixelated'),
-											A2($elm$html$Html$Attributes$style, 'image-rendering', 'crisp-edges'),
-											A2($elm$html$Html$Attributes$style, 'max-width', '90%'),
-											A2($elm$html$Html$Attributes$style, 'max-height', '280px'),
-											A2($elm$html$Html$Attributes$style, 'object-fit', 'contain')
+											$elm$html$Html$Attributes$class('ase-color-swatch'),
+											A2($elm$html$Html$Attributes$style, 'position', 'absolute'),
+											A2($elm$html$Html$Attributes$style, 'top', '0'),
+											A2($elm$html$Html$Attributes$style, 'left', '0'),
+											A2($elm$html$Html$Attributes$style, 'background', $author$project$Theme$bgDark)
 										]),
 									_List_Nil)
-								]))
-						])),
-					A2(
-					$elm$html$Html$div,
-					_List_fromArray(
-						[
-							A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-							A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-							A2($elm$html$Html$Attributes$style, 'justify-content', 'space-between'),
-							A2($elm$html$Html$Attributes$style, 'padding', '3px 8px'),
-							A2($elm$html$Html$Attributes$style, 'background', '#1e1e32'),
-							A2($elm$html$Html$Attributes$style, 'border-top', '1px solid ' + aseBorder)
-						]),
-					_List_fromArray(
-						[
-							A2(
-							$elm$html$Html$div,
-							_List_fromArray(
-								[
-									A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-									A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-									A2($elm$html$Html$Attributes$style, 'gap', '12px')
-								]),
-							_List_fromArray(
-								[
-									A2(
-									$elm$html$Html$div,
-									_List_fromArray(
-										[
-											A2($elm$html$Html$Attributes$style, 'position', 'relative'),
-											A2($elm$html$Html$Attributes$style, 'width', '24px'),
-											A2($elm$html$Html$Attributes$style, 'height', '24px')
-										]),
-									_List_fromArray(
-										[
-											A2(
-											$elm$html$Html$div,
-											_List_fromArray(
-												[
-													$elm$html$Html$Attributes$class('ase-color-swatch'),
-													A2($elm$html$Html$Attributes$style, 'position', 'absolute'),
-													A2($elm$html$Html$Attributes$style, 'bottom', '0'),
-													A2($elm$html$Html$Attributes$style, 'right', '0'),
-													A2($elm$html$Html$Attributes$style, 'background', '#eeedf0')
-												]),
-											_List_Nil),
-											A2(
-											$elm$html$Html$div,
-											_List_fromArray(
-												[
-													$elm$html$Html$Attributes$class('ase-color-swatch'),
-													A2($elm$html$Html$Attributes$style, 'position', 'absolute'),
-													A2($elm$html$Html$Attributes$style, 'top', '0'),
-													A2($elm$html$Html$Attributes$style, 'left', '0'),
-													A2($elm$html$Html$Attributes$style, 'background', '#0a0a0c')
-												]),
-											_List_Nil)
-										])),
-									A2(
-									$elm$html$Html$div,
-									_List_fromArray(
-										[
-											A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
-											A2($elm$html$Html$Attributes$style, 'font-size', '8px'),
-											A2($elm$html$Html$Attributes$style, 'color', aseText)
-										]),
-									_List_fromArray(
-										[
-											$elm$html$Html$text(
-											$elm$core$String$fromInt(width) + ('x' + ($elm$core$String$fromInt(height) + 'px')))
-										]))
 								])),
 							A2(
 							$elm$html$Html$div,
 							_List_fromArray(
 								[
-									A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-									A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-									A2($elm$html$Html$Attributes$style, 'gap', '2px')
-								]),
-							A2(
-								$elm$core$List$indexedMap,
-								F2(
-									function (i, _v0) {
-										return A2(
-											$elm$html$Html$div,
-											_List_fromArray(
-												[
-													A2($elm$html$Html$Attributes$style, 'width', '20px'),
-													A2($elm$html$Html$Attributes$style, 'height', '16px'),
-													A2(
-													$elm$html$Html$Attributes$style,
-													'border',
-													'1px solid ' + (_Utils_eq(i, selectedFrame) ? aseHighlight : aseBorder)),
-													A2(
-													$elm$html$Html$Attributes$style,
-													'background',
-													_Utils_eq(i, selectedFrame) ? '#3a3a5c' : '#222240'),
-													A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
-													A2($elm$html$Html$Attributes$style, 'font-size', '7px'),
-													A2(
-													$elm$html$Html$Attributes$style,
-													'color',
-													_Utils_eq(i, selectedFrame) ? aseTextBright : aseText),
-													A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-													A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-													A2($elm$html$Html$Attributes$style, 'justify-content', 'center')
-												]),
-											_List_fromArray(
-												[
-													$elm$html$Html$text(
-													$elm$core$String$fromInt(i + 1))
-												]));
-									}),
-								A2($elm$core$List$range, 0, 4))),
-							A2(
-							$elm$html$Html$div,
-							_List_fromArray(
-								[
-									A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
+									A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
 									A2($elm$html$Html$Attributes$style, 'font-size', '8px'),
-									A2($elm$html$Html$Attributes$style, 'color', aseText)
+									A2($elm$html$Html$Attributes$style, 'color', $author$project$Main$aseText)
 								]),
 							_List_fromArray(
 								[
 									$elm$html$Html$text(
-									'Frame ' + ($elm$core$String$fromInt(selectedFrame + 1) + '/5'))
+									$elm$core$String$fromInt(width) + ('x' + ($elm$core$String$fromInt(height) + 'px')))
 								]))
 						])),
 					A2(
@@ -7527,204 +7498,89 @@ var $author$project$Main$viewAsepritePanel = F5(
 						[
 							A2($elm$html$Html$Attributes$style, 'display', 'flex'),
 							A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-							A2($elm$html$Html$Attributes$style, 'padding', '4px 6px'),
-							A2($elm$html$Html$Attributes$style, 'gap', '2px'),
-							A2($elm$html$Html$Attributes$style, 'background', '#1a1a30'),
-							A2($elm$html$Html$Attributes$style, 'border-top', '1px solid ' + aseBorder),
-							A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap')
+							A2($elm$html$Html$Attributes$style, 'gap', '2px')
 						]),
 					A2(
-						$elm$core$List$map,
-						function (color) {
-							return A2(
-								$elm$html$Html$div,
-								_List_fromArray(
-									[
-										A2($elm$html$Html$Attributes$style, 'width', '10px'),
-										A2($elm$html$Html$Attributes$style, 'height', '10px'),
-										A2($elm$html$Html$Attributes$style, 'background', color),
-										A2($elm$html$Html$Attributes$style, 'border', '1px solid rgba(255,255,255,0.06)')
-									]),
-								_List_Nil);
-						},
-						_List_fromArray(
-							['#000000', '#1a1a2e', '#2a2a48', '#3a3a5c', '#5c5c8a', '#8888aa', '#bbbbdd', '#eeedf0', '#a855f7', '#7c3aed', '#6d28d9', '#5b21b6', '#d946ef', '#c026d3', '#a21caf', '#86198f', '#3b82f6', '#2563eb', '#1d4ed8', '#1e40af', '#ef4444', '#dc2626', '#b91c1c', '#991b1b', '#f59e0b', '#d97706', '#b45309', '#92400e', '#22c55e', '#16a34a', '#15803d', '#166534'])))
+						$elm$core$List$indexedMap,
+						F2(
+							function (i, _v0) {
+								return A2(
+									$elm$html$Html$div,
+									_List_fromArray(
+										[
+											A2($elm$html$Html$Attributes$style, 'width', '20px'),
+											A2($elm$html$Html$Attributes$style, 'height', '16px'),
+											A2(
+											$elm$html$Html$Attributes$style,
+											'border',
+											'1px solid ' + (_Utils_eq(i, selectedFrame) ? $author$project$Main$aseHighlight : $author$project$Main$aseBorder)),
+											A2(
+											$elm$html$Html$Attributes$style,
+											'background',
+											_Utils_eq(i, selectedFrame) ? $author$project$Main$aseBorder : '#222240'),
+											A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
+											A2($elm$html$Html$Attributes$style, 'font-size', '7px'),
+											A2(
+											$elm$html$Html$Attributes$style,
+											'color',
+											_Utils_eq(i, selectedFrame) ? $author$project$Main$aseTextBright : $author$project$Main$aseText),
+											A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+											A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+											A2($elm$html$Html$Attributes$style, 'justify-content', 'center')
+										]),
+									_List_fromArray(
+										[
+											$elm$html$Html$text(
+											$elm$core$String$fromInt(i + 1))
+										]));
+							}),
+						A2($elm$core$List$range, 0, 4))),
+					A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
+							A2($elm$html$Html$Attributes$style, 'font-size', '8px'),
+							A2($elm$html$Html$Attributes$style, 'color', $author$project$Main$aseText)
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text(
+							'Frame ' + ($elm$core$String$fromInt(selectedFrame + 1) + '/5'))
+						]))
 				]));
 	});
-var $elm$core$String$fromFloat = _String_fromNumber;
-var $author$project$Game$viewGameAsteroid = function (a) {
+var $author$project$Main$aseWindowButton = function (label) {
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
 			[
-				A2($elm$html$Html$Attributes$style, 'position', 'absolute'),
-				A2(
-				$elm$html$Html$Attributes$style,
-				'left',
-				$elm$core$String$fromFloat(a.pos.x - a.size) + 'px'),
-				A2(
-				$elm$html$Html$Attributes$style,
-				'top',
-				$elm$core$String$fromFloat(a.pos.y - a.size) + 'px'),
-				A2(
-				$elm$html$Html$Attributes$style,
-				'width',
-				$elm$core$String$fromFloat(a.size * 2) + 'px'),
-				A2(
-				$elm$html$Html$Attributes$style,
-				'height',
-				$elm$core$String$fromFloat(a.size * 2) + 'px'),
-				A2($elm$html$Html$Attributes$style, 'border', '1px solid rgba(168,85,247,0.3)'),
-				A2($elm$html$Html$Attributes$style, 'border-radius', '30% 70% 50% 40% / 60% 30% 70% 50%'),
-				A2($elm$html$Html$Attributes$style, 'background', 'rgba(168,85,247,0.03)'),
-				A2($elm$html$Html$Attributes$style, 'box-shadow', 'inset 0 0 8px rgba(168,85,247,0.05)'),
-				A2(
-				$elm$html$Html$Attributes$style,
-				'transform',
-				'rotate(' + ($elm$core$String$fromFloat(a.seed * 45) + 'deg)'))
-			]),
-		_List_Nil);
-};
-var $author$project$Game$viewGameBullet = function (bullet) {
-	return A2(
-		$elm$html$Html$div,
-		_List_fromArray(
-			[
-				A2($elm$html$Html$Attributes$style, 'position', 'absolute'),
-				A2(
-				$elm$html$Html$Attributes$style,
-				'left',
-				$elm$core$String$fromFloat(bullet.pos.x - 2) + 'px'),
-				A2(
-				$elm$html$Html$Attributes$style,
-				'top',
-				$elm$core$String$fromFloat(bullet.pos.y - 2) + 'px'),
-				A2($elm$html$Html$Attributes$style, 'width', '4px'),
-				A2($elm$html$Html$Attributes$style, 'height', '4px'),
-				A2($elm$html$Html$Attributes$style, 'background', 'rgba(168,85,247,0.9)'),
-				A2($elm$html$Html$Attributes$style, 'border-radius', '50%'),
-				A2($elm$html$Html$Attributes$style, 'box-shadow', '0 0 6px rgba(168,85,247,0.6)')
-			]),
-		_List_Nil);
-};
-var $author$project$Game$viewGameOver = function (score) {
-	return A2(
-		$elm$html$Html$div,
-		_List_fromArray(
-			[
-				A2($elm$html$Html$Attributes$style, 'position', 'absolute'),
-				A2($elm$html$Html$Attributes$style, 'top', '0'),
-				A2($elm$html$Html$Attributes$style, 'left', '0'),
-				A2($elm$html$Html$Attributes$style, 'width', '100%'),
-				A2($elm$html$Html$Attributes$style, 'height', '100%'),
+				A2($elm$html$Html$Attributes$style, 'width', '10px'),
+				A2($elm$html$Html$Attributes$style, 'height', '10px'),
+				A2($elm$html$Html$Attributes$style, 'border', '1px solid ' + $author$project$Main$aseBorder),
+				A2($elm$html$Html$Attributes$style, 'font-size', '7px'),
+				A2($elm$html$Html$Attributes$style, 'color', $author$project$Main$aseText),
 				A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-				A2($elm$html$Html$Attributes$style, 'flex-direction', 'column'),
 				A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-				A2($elm$html$Html$Attributes$style, 'justify-content', 'center'),
-				A2($elm$html$Html$Attributes$style, 'background', 'rgba(0,0,0,0.7)')
+				A2($elm$html$Html$Attributes$style, 'justify-content', 'center')
 			]),
 		_List_fromArray(
 			[
-				A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[
-						A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
-						A2($elm$html$Html$Attributes$style, 'font-size', '20px'),
-						A2($elm$html$Html$Attributes$style, 'color', 'rgba(168,85,247,0.8)'),
-						A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.2em'),
-						A2($elm$html$Html$Attributes$style, 'margin-bottom', '8px')
-					]),
-				_List_fromArray(
-					[
-						$elm$html$Html$text('DESTROYED')
-					])),
-				A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[
-						A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
-						A2($elm$html$Html$Attributes$style, 'font-size', '12px'),
-						A2($elm$html$Html$Attributes$style, 'color', 'rgba(168,85,247,0.4)'),
-						A2($elm$html$Html$Attributes$style, 'margin-bottom', '16px')
-					]),
-				_List_fromArray(
-					[
-						$elm$html$Html$text(
-						'SCORE: ' + $elm$core$String$fromInt(score))
-					])),
-				A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[
-						A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
-						A2($elm$html$Html$Attributes$style, 'font-size', '10px'),
-						A2($elm$html$Html$Attributes$style, 'color', 'rgba(168,85,247,0.3)'),
-						A2($elm$html$Html$Attributes$style, 'animation', 'blink 1.5s steps(1) infinite')
-					]),
-				_List_fromArray(
-					[
-						$elm$html$Html$text('press R to restart')
-					]))
+				$elm$html$Html$text(label)
 			]));
 };
-var $author$project$Game$viewGameShip = function (ship) {
-	var angleDeg = ((ship.angle * 180) / $elm$core$Basics$pi) + 90;
+var $author$project$Main$viewAseTitleBar = function (filename) {
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
 			[
-				A2($elm$html$Html$Attributes$style, 'position', 'absolute'),
-				A2(
-				$elm$html$Html$Attributes$style,
-				'left',
-				$elm$core$String$fromFloat(ship.pos.x - 10) + 'px'),
-				A2(
-				$elm$html$Html$Attributes$style,
-				'top',
-				$elm$core$String$fromFloat(ship.pos.y - 10) + 'px'),
-				A2($elm$html$Html$Attributes$style, 'width', '20px'),
-				A2($elm$html$Html$Attributes$style, 'height', '20px'),
-				A2(
-				$elm$html$Html$Attributes$style,
-				'transform',
-				'rotate(' + ($elm$core$String$fromFloat(angleDeg) + 'deg)'))
+				A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+				A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+				A2($elm$html$Html$Attributes$style, 'justify-content', 'space-between'),
+				A2($elm$html$Html$Attributes$style, 'padding', '4px 8px'),
+				A2($elm$html$Html$Attributes$style, 'background', $author$project$Main$aseTitleBg),
+				A2($elm$html$Html$Attributes$style, 'border-bottom', '1px solid ' + $author$project$Main$aseBorder)
 			]),
-		_List_fromArray(
-			[
-				A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[
-						A2($elm$html$Html$Attributes$style, 'width', '0'),
-						A2($elm$html$Html$Attributes$style, 'height', '0'),
-						A2($elm$html$Html$Attributes$style, 'border-left', '8px solid transparent'),
-						A2($elm$html$Html$Attributes$style, 'border-right', '8px solid transparent'),
-						A2($elm$html$Html$Attributes$style, 'border-bottom', '20px solid rgba(168,85,247,0.8)'),
-						A2($elm$html$Html$Attributes$style, 'filter', 'drop-shadow(0 0 4px rgba(168,85,247,0.6))'),
-						A2($elm$html$Html$Attributes$style, 'margin-left', '2px')
-					]),
-				_List_Nil),
-				ship.thrust ? A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[
-						A2($elm$html$Html$Attributes$style, 'width', '0'),
-						A2($elm$html$Html$Attributes$style, 'height', '0'),
-						A2($elm$html$Html$Attributes$style, 'border-left', '4px solid transparent'),
-						A2($elm$html$Html$Attributes$style, 'border-right', '4px solid transparent'),
-						A2($elm$html$Html$Attributes$style, 'border-top', '8px solid rgba(217,70,239,0.7)'),
-						A2($elm$html$Html$Attributes$style, 'margin-left', '6px'),
-						A2($elm$html$Html$Attributes$style, 'margin-top', '1px'),
-						A2($elm$html$Html$Attributes$style, 'filter', 'drop-shadow(0 0 3px rgba(217,70,239,0.5))')
-					]),
-				_List_Nil) : $elm$html$Html$text('')
-			]));
-};
-var $author$project$Game$viewAsteroidsGame = function (g) {
-	return A2(
-		$elm$html$Html$div,
-		_List_Nil,
 		_List_fromArray(
 			[
 				A2(
@@ -7733,11 +7589,7 @@ var $author$project$Game$viewAsteroidsGame = function (g) {
 					[
 						A2($elm$html$Html$Attributes$style, 'display', 'flex'),
 						A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-						A2($elm$html$Html$Attributes$style, 'justify-content', 'space-between'),
-						A2($elm$html$Html$Attributes$style, 'padding', '8px 12px'),
-						A2($elm$html$Html$Attributes$style, 'background', 'rgba(168,85,247,0.04)'),
-						A2($elm$html$Html$Attributes$style, 'border', '1px solid rgba(168,85,247,0.1)'),
-						A2($elm$html$Html$Attributes$style, 'border-bottom', 'none')
+						A2($elm$html$Html$Attributes$style, 'gap', '8px')
 					]),
 				_List_fromArray(
 					[
@@ -7745,89 +7597,110 @@ var $author$project$Game$viewAsteroidsGame = function (g) {
 						$elm$html$Html$div,
 						_List_fromArray(
 							[
-								A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
-								A2($elm$html$Html$Attributes$style, 'font-size', '10px'),
-								A2($elm$html$Html$Attributes$style, 'color', 'rgba(168,85,247,0.5)'),
-								A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.1em')
+								A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
+								A2($elm$html$Html$Attributes$style, 'font-size', '9px'),
+								A2($elm$html$Html$Attributes$style, 'color', $author$project$Main$aseTextBright),
+								A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.05em')
 							]),
 						_List_fromArray(
 							[
-								$elm$html$Html$text('ASTEROIDS.EXE')
-							])),
-						A2(
-						$elm$html$Html$div,
-						_List_fromArray(
-							[
-								A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
-								A2($elm$html$Html$Attributes$style, 'font-size', '10px'),
-								A2($elm$html$Html$Attributes$style, 'color', 'rgba(168,85,247,0.3)')
-							]),
-						_List_fromArray(
-							[
-								$elm$html$Html$text(
-								'SCORE: ' + $elm$core$String$fromInt(g.score))
+								$elm$html$Html$text('Aseprite - ' + filename)
 							]))
 					])),
 				A2(
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						A2($elm$html$Html$Attributes$style, 'position', 'relative'),
-						A2($elm$html$Html$Attributes$style, 'width', '100%'),
-						A2($elm$html$Html$Attributes$style, 'max-width', '400px'),
-						A2($elm$html$Html$Attributes$style, 'aspect-ratio', '1'),
-						A2($elm$html$Html$Attributes$style, 'background', 'rgba(0,0,0,0.6)'),
-						A2($elm$html$Html$Attributes$style, 'border', '1px solid rgba(168,85,247,0.1)'),
-						A2($elm$html$Html$Attributes$style, 'overflow', 'hidden')
+						A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+						A2($elm$html$Html$Attributes$style, 'gap', '4px')
 					]),
-				_Utils_ap(
-					_List_fromArray(
-						[
-							A2(
-							$elm$html$Html$div,
-							_List_fromArray(
-								[
-									A2($elm$html$Html$Attributes$style, 'position', 'absolute'),
-									A2($elm$html$Html$Attributes$style, 'top', '0'),
-									A2($elm$html$Html$Attributes$style, 'left', '0'),
-									A2($elm$html$Html$Attributes$style, 'width', '100%'),
-									A2($elm$html$Html$Attributes$style, 'height', '100%'),
-									A2($elm$html$Html$Attributes$style, 'background-image', 'linear-gradient(rgba(168,85,247,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(168,85,247,0.03) 1px, transparent 1px)'),
-									A2($elm$html$Html$Attributes$style, 'background-size', '40px 40px')
-								]),
-							_List_Nil)
-						]),
-					_Utils_ap(
-						A2($elm$core$List$map, $author$project$Game$viewGameAsteroid, g.asteroids),
-						_Utils_ap(
-							A2($elm$core$List$map, $author$project$Game$viewGameBullet, g.bullets),
-							_Utils_ap(
-								_List_fromArray(
-									[
-										$author$project$Game$viewGameShip(g.ship)
-									]),
-								g.gameOver ? _List_fromArray(
-									[
-										$author$project$Game$viewGameOver(g.score)
-									]) : _List_Nil))))),
-				A2(
+				_List_fromArray(
+					[
+						$author$project$Main$aseWindowButton('_'),
+						$author$project$Main$aseWindowButton('□'),
+						$author$project$Main$aseWindowButton('x')
+					]))
+			]));
+};
+var $author$project$Main$aseToolbarBg = '#262642';
+var $author$project$Main$viewAseToolbar = A2(
+	$elm$html$Html$div,
+	_List_fromArray(
+		[
+			A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+			A2($elm$html$Html$Attributes$style, 'flex-direction', 'column'),
+			A2($elm$html$Html$Attributes$style, 'gap', '1px'),
+			A2($elm$html$Html$Attributes$style, 'padding', '4px 3px'),
+			A2($elm$html$Html$Attributes$style, 'background', $author$project$Main$aseToolbarBg),
+			A2($elm$html$Html$Attributes$style, 'border-right', '1px solid ' + $author$project$Main$aseBorder)
+		]),
+	A2(
+		$elm$core$List$map,
+		function (icon) {
+			return A2(
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						A2($elm$html$Html$Attributes$style, 'padding', '8px 12px'),
-						A2($elm$html$Html$Attributes$style, 'background', 'rgba(168,85,247,0.02)'),
-						A2($elm$html$Html$Attributes$style, 'border', '1px solid rgba(168,85,247,0.06)'),
-						A2($elm$html$Html$Attributes$style, 'border-top', 'none'),
-						A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
-						A2($elm$html$Html$Attributes$style, 'font-size', '9px'),
-						A2($elm$html$Html$Attributes$style, 'color', 'rgba(168,85,247,0.25)'),
-						A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.05em')
+						$elm$html$Html$Attributes$class('ase-tool')
 					]),
 				_List_fromArray(
 					[
-						$elm$html$Html$text('WASD / arrows + space to shoot')
-					]))
-			]));
+						$elm$html$Html$text(icon)
+					]));
+		},
+		_List_fromArray(
+			['✎', '◉', '▬', '◇', '⬚', '✦', '◫', '⊘', '↔', '▲'])));
+var $author$project$Main$viewAsepritePanel = F5(
+	function (filename, imagePath, width, height, selectedFrame) {
+		return A2(
+			$elm$html$Html$div,
+			_List_fromArray(
+				[
+					A2($elm$html$Html$Attributes$style, 'border', '1px solid ' + $author$project$Main$aseBorder),
+					A2($elm$html$Html$Attributes$style, 'background', $author$project$Main$aseBg),
+					A2($elm$html$Html$Attributes$style, 'overflow', 'hidden'),
+					A2($elm$html$Html$Attributes$style, 'animation', 'fadeUp 0.6s ease 0.4s both')
+				]),
+			_List_fromArray(
+				[
+					$author$project$Main$viewAseTitleBar(filename),
+					$author$project$Main$viewAseMenuBar,
+					A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'display', 'flex')
+						]),
+					_List_fromArray(
+						[
+							$author$project$Main$viewAseToolbar,
+							$author$project$Main$viewAseCanvas(imagePath)
+						])),
+					A3($author$project$Main$viewAseTimeline, width, height, selectedFrame),
+					$author$project$Main$viewAsePalette
+				]));
+	});
+var $author$project$Theme$blue = {b: 246, g: 130, r: 59};
+var $author$project$Theme$fuchsia = {b: 239, g: 70, r: 217};
+var $author$project$Cards$categoryColor = function (category) {
+	switch (category.$) {
+		case 'Experience':
+			return $author$project$Theme$purple;
+		case 'Education':
+			return $author$project$Theme$blue;
+		default:
+			return $author$project$Theme$fuchsia;
+	}
+};
+var $author$project$Cards$categoryLabel = function (category) {
+	switch (category.$) {
+		case 'Experience':
+			return 'EXP';
+		case 'Education':
+			return 'EDU';
+		default:
+			return 'PRJ';
+	}
 };
 var $elm$core$String$cons = _String_cons;
 var $elm$core$String$fromChar = function (_char) {
@@ -7857,38 +7730,63 @@ var $elm$core$String$padLeft = F3(
 			string);
 	});
 var $elm$html$Html$span = _VirtualDom_node('span');
+var $author$project$Theme$textGray = 'rgba(196,195,200,0.9)';
+var $author$project$Cards$viewCardDetail = F3(
+	function (color, detailIndex, detail) {
+		return A2(
+			$elm$html$Html$div,
+			_List_fromArray(
+				[
+					A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+					A2($elm$html$Html$Attributes$style, 'gap', '10px'),
+					A2($elm$html$Html$Attributes$style, 'padding', '4px 0')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$elm$html$Html$span,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
+							A2($elm$html$Html$Attributes$style, 'font-size', '11px'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'color',
+							A2($author$project$Theme$rgbaStr, color, 0.6)),
+							A2($elm$html$Html$Attributes$style, 'min-width', '12px'),
+							A2($elm$html$Html$Attributes$style, 'padding-top', '2px')
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text(
+							$elm$core$String$fromInt(detailIndex + 1) + '.')
+						])),
+					A2(
+					$elm$html$Html$span,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
+							A2($elm$html$Html$Attributes$style, 'color', $author$project$Theme$textGray),
+							A2($elm$html$Html$Attributes$style, 'line-height', '1.5')
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text(detail)
+						]))
+				]));
+	});
 var $author$project$Cards$viewCrystalCard = F4(
 	function (toggleMsg, expandedSet, idx, crystal) {
+		var label = $author$project$Cards$categoryLabel(crystal.category);
 		var isExpanded = A2($elm$core$Set$member, idx, expandedSet);
-		var idxStr = A3(
+		var indexLabel = A3(
 			$elm$core$String$padLeft,
 			2,
 			_Utils_chr('0'),
 			$elm$core$String$fromInt(idx + 1));
-		var delayStr = $elm$core$String$fromFloat(idx * 0.08) + 's';
-		var catLabel = function () {
-			var _v1 = crystal.category;
-			switch (_v1.$) {
-				case 'Experience':
-					return 'EXP';
-				case 'Education':
-					return 'EDU';
-				default:
-					return 'PRJ';
-			}
-		}();
-		var catColor = function () {
-			var _v0 = crystal.category;
-			switch (_v0.$) {
-				case 'Experience':
-					return '168,85,247';
-				case 'Education':
-					return '59,130,246';
-				default:
-					return '217,70,239';
-			}
-		}();
-		var arrowChar = isExpanded ? 'v' : '>';
+		var color = $author$project$Cards$categoryColor(crystal.category);
+		var arrowChar = '>';
+		var animDelay = $elm$core$String$fromFloat(idx * 0.08) + 's';
 		return A2(
 			$elm$html$Html$div,
 			_List_fromArray(
@@ -7897,12 +7795,18 @@ var $author$project$Cards$viewCrystalCard = F4(
 					A2($elm$html$Html$Attributes$style, 'display', 'grid'),
 					A2($elm$html$Html$Attributes$style, 'grid-template-columns', '48px 1fr auto'),
 					A2($elm$html$Html$Attributes$style, 'gap', '0'),
-					A2($elm$html$Html$Attributes$style, 'border', '1px solid rgba(' + (catColor + ',0.08)')),
-					A2($elm$html$Html$Attributes$style, 'background', 'linear-gradient(135deg, rgba(' + (catColor + ',0.02) 0%, rgba(10,10,12,0.95) 100%)')),
+					A2(
+					$elm$html$Html$Attributes$style,
+					'border',
+					'1px solid ' + A2($author$project$Theme$rgbaStr, color, 0.08)),
+					A2(
+					$elm$html$Html$Attributes$style,
+					'background',
+					'linear-gradient(135deg, ' + (A2($author$project$Theme$rgbaStr, color, 0.02) + ' 0%, rgba(10,10,12,0.95) 100%)')),
 					A2($elm$html$Html$Attributes$style, 'padding', '0'),
 					A2($elm$html$Html$Attributes$style, 'position', 'relative'),
 					A2($elm$html$Html$Attributes$style, 'overflow', 'hidden'),
-					A2($elm$html$Html$Attributes$style, 'animation', 'fadeUp 0.6s ease ' + (delayStr + ' both')),
+					A2($elm$html$Html$Attributes$style, 'animation', 'fadeUp 0.6s ease ' + (animDelay + ' both')),
 					A2($elm$html$Html$Attributes$style, 'cursor', 'pointer'),
 					$elm$html$Html$Events$onClick(
 					toggleMsg(idx))
@@ -7919,7 +7823,10 @@ var $author$project$Cards$viewCrystalCard = F4(
 							A2($elm$html$Html$Attributes$style, 'left', '0'),
 							A2($elm$html$Html$Attributes$style, 'width', '100%'),
 							A2($elm$html$Html$Attributes$style, 'height', '1px'),
-							A2($elm$html$Html$Attributes$style, 'background', 'linear-gradient(90deg, transparent, rgba(' + (catColor + ',0.4), transparent)')),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'background',
+							'linear-gradient(90deg, transparent, ' + (A2($author$project$Theme$rgbaStr, color, 0.4) + ', transparent)')),
 							A2($elm$html$Html$Attributes$style, 'opacity', '0'),
 							A2($elm$html$Html$Attributes$style, 'pointer-events', 'none'),
 							A2($elm$html$Html$Attributes$style, 'z-index', '5')
@@ -7933,7 +7840,10 @@ var $author$project$Cards$viewCrystalCard = F4(
 							A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
 							A2($elm$html$Html$Attributes$style, 'justify-content', 'center'),
 							A2($elm$html$Html$Attributes$style, 'padding', '20px 0'),
-							A2($elm$html$Html$Attributes$style, 'border-right', '1px solid rgba(' + (catColor + ',0.06)'))
+							A2(
+							$elm$html$Html$Attributes$style,
+							'border-right',
+							'1px solid ' + A2($author$project$Theme$rgbaStr, color, 0.06))
 						]),
 					_List_fromArray(
 						[
@@ -7942,14 +7852,17 @@ var $author$project$Cards$viewCrystalCard = F4(
 							_List_fromArray(
 								[
 									$elm$html$Html$Attributes$class('card-idx'),
-									A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
+									A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
 									A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
-									A2($elm$html$Html$Attributes$style, 'color', 'rgba(' + (catColor + ',0.7)')),
+									A2(
+									$elm$html$Html$Attributes$style,
+									'color',
+									A2($author$project$Theme$rgbaStr, color, 0.7)),
 									A2($elm$html$Html$Attributes$style, 'transition', 'color 0.3s ease')
 								]),
 							_List_fromArray(
 								[
-									$elm$html$Html$text(idxStr)
+									$elm$html$Html$text(indexLabel)
 								]))
 						])),
 					A2(
@@ -7958,146 +7871,129 @@ var $author$project$Cards$viewCrystalCard = F4(
 						[
 							A2($elm$html$Html$Attributes$style, 'padding', '20px 24px')
 						]),
-					_Utils_ap(
-						_List_fromArray(
-							[
-								A2(
-								$elm$html$Html$div,
-								_List_fromArray(
-									[
-										A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-										A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-										A2($elm$html$Html$Attributes$style, 'gap', '12px'),
-										A2($elm$html$Html$Attributes$style, 'margin-bottom', '10px')
-									]),
-								_List_fromArray(
-									[
-										A2(
-										$elm$html$Html$span,
-										_List_fromArray(
-											[
-												A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
-												A2($elm$html$Html$Attributes$style, 'font-size', '11px'),
-												A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.2em'),
-												A2($elm$html$Html$Attributes$style, 'color', 'rgba(' + (catColor + ',0.85)')),
-												A2($elm$html$Html$Attributes$style, 'border', '1px solid rgba(' + (catColor + ',0.15)')),
-												A2($elm$html$Html$Attributes$style, 'padding', '2px 8px')
-											]),
-										_List_fromArray(
-											[
-												$elm$html$Html$text(catLabel)
-											])),
-										A2(
-										$elm$html$Html$span,
-										_List_fromArray(
-											[
-												A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
-												A2($elm$html$Html$Attributes$style, 'font-size', '12px'),
-												A2($elm$html$Html$Attributes$style, 'color', 'rgba(196,195,200,0.9)')
-											]),
-										_List_fromArray(
-											[
-												$elm$html$Html$text(crystal.period)
-											]))
-									])),
-								A2(
-								$elm$html$Html$div,
-								_List_fromArray(
-									[
-										A2($elm$html$Html$Attributes$style, 'font-size', '18px'),
-										A2($elm$html$Html$Attributes$style, 'font-weight', '700'),
-										A2($elm$html$Html$Attributes$style, 'color', '#eeedf0'),
-										A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.02em'),
-										A2($elm$html$Html$Attributes$style, 'margin-bottom', '3px')
-									]),
-								_List_fromArray(
-									[
-										$elm$html$Html$text(crystal.title)
-									])),
-								A2(
-								$elm$html$Html$div,
-								_List_fromArray(
-									[
-										A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
-										A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
-										A2($elm$html$Html$Attributes$style, 'color', 'rgba(' + (catColor + ',0.75)')),
-										A2($elm$html$Html$Attributes$style, 'margin-bottom', '10px')
-									]),
-								_List_fromArray(
-									[
-										$elm$html$Html$text(crystal.org)
-									])),
-								A2(
-								$elm$html$Html$div,
-								_List_fromArray(
-									[
-										A2($elm$html$Html$Attributes$style, 'font-size', '14px'),
-										A2($elm$html$Html$Attributes$style, 'color', 'rgba(196,195,200,0.9)'),
-										A2($elm$html$Html$Attributes$style, 'line-height', '1.5'),
-										A2(
-										$elm$html$Html$Attributes$style,
-										'margin-bottom',
-										isExpanded ? '14px' : '0')
-									]),
-								_List_fromArray(
-									[
-										$elm$html$Html$text(crystal.summary)
-									]))
-							]),
-						isExpanded ? _List_fromArray(
-							[
-								A2(
-								$elm$html$Html$div,
-								_List_fromArray(
-									[
-										A2($elm$html$Html$Attributes$style, 'border-top', '1px solid rgba(' + (catColor + ',0.08)')),
-										A2($elm$html$Html$Attributes$style, 'padding-top', '12px')
-									]),
-								A2(
-									$elm$core$List$indexedMap,
-									F2(
-										function (di, detail) {
-											return A2(
-												$elm$html$Html$div,
-												_List_fromArray(
-													[
-														A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-														A2($elm$html$Html$Attributes$style, 'gap', '10px'),
-														A2($elm$html$Html$Attributes$style, 'padding', '4px 0')
-													]),
-												_List_fromArray(
-													[
-														A2(
-														$elm$html$Html$span,
-														_List_fromArray(
-															[
-																A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
-																A2($elm$html$Html$Attributes$style, 'font-size', '11px'),
-																A2($elm$html$Html$Attributes$style, 'color', 'rgba(' + (catColor + ',0.6)')),
-																A2($elm$html$Html$Attributes$style, 'min-width', '12px'),
-																A2($elm$html$Html$Attributes$style, 'padding-top', '2px')
-															]),
-														_List_fromArray(
-															[
-																$elm$html$Html$text(
-																$elm$core$String$fromInt(di + 1) + '.')
-															])),
-														A2(
-														$elm$html$Html$span,
-														_List_fromArray(
-															[
-																A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
-																A2($elm$html$Html$Attributes$style, 'color', 'rgba(196,195,200,0.9)'),
-																A2($elm$html$Html$Attributes$style, 'line-height', '1.5')
-															]),
-														_List_fromArray(
-															[
-																$elm$html$Html$text(detail)
-															]))
-													]));
-										}),
-									crystal.details))
-							]) : _List_Nil)),
+					_List_fromArray(
+						[
+							A2(
+							$elm$html$Html$div,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+									A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+									A2($elm$html$Html$Attributes$style, 'gap', '12px'),
+									A2($elm$html$Html$Attributes$style, 'margin-bottom', '10px')
+								]),
+							_List_fromArray(
+								[
+									A2(
+									$elm$html$Html$span,
+									_List_fromArray(
+										[
+											A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
+											A2($elm$html$Html$Attributes$style, 'font-size', '11px'),
+											A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.2em'),
+											A2(
+											$elm$html$Html$Attributes$style,
+											'color',
+											A2($author$project$Theme$rgbaStr, color, 0.85)),
+											A2(
+											$elm$html$Html$Attributes$style,
+											'border',
+											'1px solid ' + A2($author$project$Theme$rgbaStr, color, 0.15)),
+											A2($elm$html$Html$Attributes$style, 'padding', '2px 8px')
+										]),
+									_List_fromArray(
+										[
+											$elm$html$Html$text(label)
+										])),
+									A2(
+									$elm$html$Html$span,
+									_List_fromArray(
+										[
+											A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
+											A2($elm$html$Html$Attributes$style, 'font-size', '12px'),
+											A2($elm$html$Html$Attributes$style, 'color', $author$project$Theme$textGray)
+										]),
+									_List_fromArray(
+										[
+											$elm$html$Html$text(crystal.period)
+										]))
+								])),
+							A2(
+							$elm$html$Html$div,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'font-size', '18px'),
+									A2($elm$html$Html$Attributes$style, 'font-weight', '700'),
+									A2($elm$html$Html$Attributes$style, 'color', $author$project$Theme$textLight),
+									A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.02em'),
+									A2($elm$html$Html$Attributes$style, 'margin-bottom', '3px')
+								]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text(crystal.title)
+								])),
+							A2(
+							$elm$html$Html$div,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
+									A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
+									A2(
+									$elm$html$Html$Attributes$style,
+									'color',
+									A2($author$project$Theme$rgbaStr, color, 0.75)),
+									A2($elm$html$Html$Attributes$style, 'margin-bottom', '10px')
+								]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text(crystal.org)
+								])),
+							A2(
+							$elm$html$Html$div,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'font-size', '14px'),
+									A2($elm$html$Html$Attributes$style, 'color', $author$project$Theme$textGray),
+									A2($elm$html$Html$Attributes$style, 'line-height', '1.5')
+								]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text(crystal.summary)
+								])),
+							A2(
+							$elm$html$Html$div,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'overflow', 'hidden'),
+									A2($elm$html$Html$Attributes$style, 'transition', 'max-height 0.35s ease, opacity 0.3s ease'),
+									A2(
+									$elm$html$Html$Attributes$style,
+									'max-height',
+									isExpanded ? '600px' : '0'),
+									A2(
+									$elm$html$Html$Attributes$style,
+									'opacity',
+									isExpanded ? '1' : '0')
+								]),
+							_List_fromArray(
+								[
+									A2(
+									$elm$html$Html$div,
+									_List_fromArray(
+										[
+											A2(
+											$elm$html$Html$Attributes$style,
+											'border-top',
+											'1px solid ' + A2($author$project$Theme$rgbaStr, color, 0.08)),
+											A2($elm$html$Html$Attributes$style, 'padding-top', '12px'),
+											A2($elm$html$Html$Attributes$style, 'margin-top', '14px')
+										]),
+									A2(
+										$elm$core$List$indexedMap,
+										$author$project$Cards$viewCardDetail(color),
+										crystal.details))
+								]))
+						])),
 					A2(
 					$elm$html$Html$div,
 					_List_fromArray(
@@ -8113,11 +8009,18 @@ var $author$project$Cards$viewCrystalCard = F4(
 							_List_fromArray(
 								[
 									$elm$html$Html$Attributes$class('card-arrow'),
-									A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
+									A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
 									A2($elm$html$Html$Attributes$style, 'font-size', '16px'),
-									A2($elm$html$Html$Attributes$style, 'color', 'rgba(' + (catColor + ',0.55)')),
+									A2(
+									$elm$html$Html$Attributes$style,
+									'color',
+									A2($author$project$Theme$rgbaStr, color, 0.55)),
 									A2($elm$html$Html$Attributes$style, 'opacity', '0.5'),
-									A2($elm$html$Html$Attributes$style, 'transition', 'opacity 0.3s ease, transform 0.3s ease')
+									A2($elm$html$Html$Attributes$style, 'transition', 'opacity 0.3s ease, transform 0.3s ease'),
+									A2(
+									$elm$html$Html$Attributes$style,
+									'transform',
+									isExpanded ? 'rotate(90deg)' : 'rotate(0deg)')
 								]),
 							_List_fromArray(
 								[
@@ -8126,9 +8029,528 @@ var $author$project$Cards$viewCrystalCard = F4(
 						]))
 				]));
 	});
+var $author$project$Game$viewCrtScanlines = A2(
+	$elm$html$Html$div,
+	_List_fromArray(
+		[
+			A2($elm$html$Html$Attributes$style, 'position', 'absolute'),
+			A2($elm$html$Html$Attributes$style, 'top', '0'),
+			A2($elm$html$Html$Attributes$style, 'left', '0'),
+			A2($elm$html$Html$Attributes$style, 'width', '100%'),
+			A2($elm$html$Html$Attributes$style, 'height', '100%'),
+			A2($elm$html$Html$Attributes$style, 'background', 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px)'),
+			A2($elm$html$Html$Attributes$style, 'pointer-events', 'none'),
+			A2($elm$html$Html$Attributes$style, 'z-index', '10')
+		]),
+	_List_Nil);
+var $author$project$Game$viewCrtVignette = A2(
+	$elm$html$Html$div,
+	_List_fromArray(
+		[
+			A2($elm$html$Html$Attributes$style, 'position', 'absolute'),
+			A2($elm$html$Html$Attributes$style, 'top', '0'),
+			A2($elm$html$Html$Attributes$style, 'left', '0'),
+			A2($elm$html$Html$Attributes$style, 'width', '100%'),
+			A2($elm$html$Html$Attributes$style, 'height', '100%'),
+			A2($elm$html$Html$Attributes$style, 'background', 'radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.6) 100%)'),
+			A2($elm$html$Html$Attributes$style, 'pointer-events', 'none'),
+			A2($elm$html$Html$Attributes$style, 'z-index', '11')
+		]),
+	_List_Nil);
+var $author$project$Game$pctX = function (x) {
+	return $elm$core$String$fromFloat((x / $author$project$Game$arenaWidth) * 100) + '%';
+};
+var $author$project$Game$pctY = function (y) {
+	return $elm$core$String$fromFloat((y / $author$project$Game$arenaHeight) * 100) + '%';
+};
+var $author$project$Game$viewGameAsteroid = function (asteroid) {
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'position', 'absolute'),
+				A2(
+				$elm$html$Html$Attributes$style,
+				'left',
+				$author$project$Game$pctX(asteroid.pos.x)),
+				A2(
+				$elm$html$Html$Attributes$style,
+				'top',
+				$author$project$Game$pctY(asteroid.pos.y)),
+				A2(
+				$elm$html$Html$Attributes$style,
+				'width',
+				$elm$core$String$fromFloat(asteroid.size * 2) + 'px'),
+				A2(
+				$elm$html$Html$Attributes$style,
+				'height',
+				$elm$core$String$fromFloat(asteroid.size * 2) + 'px'),
+				A2(
+				$elm$html$Html$Attributes$style,
+				'border',
+				'1px solid ' + $author$project$Theme$purpleA(0.3)),
+				A2($elm$html$Html$Attributes$style, 'border-radius', '30% 70% 50% 40% / 60% 30% 70% 50%'),
+				A2(
+				$elm$html$Html$Attributes$style,
+				'background',
+				$author$project$Theme$purpleA(0.03)),
+				A2(
+				$elm$html$Html$Attributes$style,
+				'box-shadow',
+				'inset 0 0 8px ' + $author$project$Theme$purpleA(0.05)),
+				A2(
+				$elm$html$Html$Attributes$style,
+				'transform',
+				'translate(-50%, -50%) rotate(' + ($elm$core$String$fromFloat(asteroid.seed * 45) + 'deg)'))
+			]),
+		_List_Nil);
+};
+var $author$project$Game$viewGameBullet = function (bullet) {
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'position', 'absolute'),
+				A2(
+				$elm$html$Html$Attributes$style,
+				'left',
+				$author$project$Game$pctX(bullet.pos.x)),
+				A2(
+				$elm$html$Html$Attributes$style,
+				'top',
+				$author$project$Game$pctY(bullet.pos.y)),
+				A2($elm$html$Html$Attributes$style, 'width', '4px'),
+				A2($elm$html$Html$Attributes$style, 'height', '4px'),
+				A2($elm$html$Html$Attributes$style, 'transform', 'translate(-50%, -50%)'),
+				A2(
+				$elm$html$Html$Attributes$style,
+				'background',
+				$author$project$Theme$purpleA(0.9)),
+				A2($elm$html$Html$Attributes$style, 'border-radius', '50%'),
+				A2(
+				$elm$html$Html$Attributes$style,
+				'box-shadow',
+				'0 0 6px ' + $author$project$Theme$purpleA(0.6))
+			]),
+		_List_Nil);
+};
+var $author$project$Game$viewGameOver = function (score) {
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'position', 'absolute'),
+				A2($elm$html$Html$Attributes$style, 'top', '0'),
+				A2($elm$html$Html$Attributes$style, 'left', '0'),
+				A2($elm$html$Html$Attributes$style, 'width', '100%'),
+				A2($elm$html$Html$Attributes$style, 'height', '100%'),
+				A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+				A2($elm$html$Html$Attributes$style, 'flex-direction', 'column'),
+				A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+				A2($elm$html$Html$Attributes$style, 'justify-content', 'center'),
+				A2($elm$html$Html$Attributes$style, 'background', 'rgba(0,0,0,0.7)')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
+						A2($elm$html$Html$Attributes$style, 'font-size', '20px'),
+						A2(
+						$elm$html$Html$Attributes$style,
+						'color',
+						$author$project$Theme$purpleA(0.8)),
+						A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.2em'),
+						A2($elm$html$Html$Attributes$style, 'margin-bottom', '8px')
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('DESTROYED')
+					])),
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
+						A2($elm$html$Html$Attributes$style, 'font-size', '12px'),
+						A2(
+						$elm$html$Html$Attributes$style,
+						'color',
+						$author$project$Theme$purpleA(0.4)),
+						A2($elm$html$Html$Attributes$style, 'margin-bottom', '16px')
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text(
+						'SCORE: ' + $elm$core$String$fromInt(score))
+					])),
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
+						A2($elm$html$Html$Attributes$style, 'font-size', '10px'),
+						A2(
+						$elm$html$Html$Attributes$style,
+						'color',
+						$author$project$Theme$purpleA(0.3)),
+						A2($elm$html$Html$Attributes$style, 'animation', 'blink 1.5s steps(1) infinite')
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('press R to restart')
+					]))
+			]));
+};
+var $author$project$Game$viewGameShip = function (ship) {
+	var angleDeg = ((ship.angle * 180) / $elm$core$Basics$pi) + 90;
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'position', 'absolute'),
+				A2(
+				$elm$html$Html$Attributes$style,
+				'left',
+				$author$project$Game$pctX(ship.pos.x)),
+				A2(
+				$elm$html$Html$Attributes$style,
+				'top',
+				$author$project$Game$pctY(ship.pos.y)),
+				A2($elm$html$Html$Attributes$style, 'width', '20px'),
+				A2($elm$html$Html$Attributes$style, 'height', '20px'),
+				A2(
+				$elm$html$Html$Attributes$style,
+				'transform',
+				'translate(-50%, -50%) rotate(' + ($elm$core$String$fromFloat(angleDeg) + 'deg)'))
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'width', '0'),
+						A2($elm$html$Html$Attributes$style, 'height', '0'),
+						A2($elm$html$Html$Attributes$style, 'border-left', '8px solid transparent'),
+						A2($elm$html$Html$Attributes$style, 'border-right', '8px solid transparent'),
+						A2(
+						$elm$html$Html$Attributes$style,
+						'border-bottom',
+						'20px solid ' + $author$project$Theme$purpleA(0.8)),
+						A2(
+						$elm$html$Html$Attributes$style,
+						'filter',
+						'drop-shadow(0 0 4px ' + ($author$project$Theme$purpleA(0.6) + ')')),
+						A2($elm$html$Html$Attributes$style, 'margin-left', '2px')
+					]),
+				_List_Nil),
+				ship.thrust ? A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'width', '0'),
+						A2($elm$html$Html$Attributes$style, 'height', '0'),
+						A2($elm$html$Html$Attributes$style, 'border-left', '4px solid transparent'),
+						A2($elm$html$Html$Attributes$style, 'border-right', '4px solid transparent'),
+						A2(
+						$elm$html$Html$Attributes$style,
+						'border-top',
+						'8px solid ' + A2($author$project$Theme$rgbaStr, $author$project$Theme$fuchsia, 0.7)),
+						A2($elm$html$Html$Attributes$style, 'margin-left', '6px'),
+						A2($elm$html$Html$Attributes$style, 'margin-top', '1px'),
+						A2(
+						$elm$html$Html$Attributes$style,
+						'filter',
+						'drop-shadow(0 0 3px ' + (A2($author$project$Theme$rgbaStr, $author$project$Theme$fuchsia, 0.5) + ')'))
+					]),
+				_List_Nil) : $elm$html$Html$text('')
+			]));
+};
+var $author$project$Game$viewAsteroidsGame = function (game) {
+	return A2(
+		$elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+						A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+						A2($elm$html$Html$Attributes$style, 'justify-content', 'space-between'),
+						A2($elm$html$Html$Attributes$style, 'padding', '8px 12px'),
+						A2(
+						$elm$html$Html$Attributes$style,
+						'background',
+						$author$project$Theme$purpleA(0.04)),
+						A2(
+						$elm$html$Html$Attributes$style,
+						'border',
+						'1px solid ' + $author$project$Theme$purpleA(0.1)),
+						A2($elm$html$Html$Attributes$style, 'border-bottom', 'none')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
+								A2($elm$html$Html$Attributes$style, 'font-size', '10px'),
+								A2(
+								$elm$html$Html$Attributes$style,
+								'color',
+								$author$project$Theme$purpleA(0.5)),
+								A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.1em')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('ASTEROIDS.EXE')
+							])),
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
+								A2($elm$html$Html$Attributes$style, 'font-size', '10px'),
+								A2(
+								$elm$html$Html$Attributes$style,
+								'color',
+								$author$project$Theme$purpleA(0.3))
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text(
+								'SCORE: ' + $elm$core$String$fromInt(game.score))
+							]))
+					])),
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'position', 'relative'),
+						A2($elm$html$Html$Attributes$style, 'width', '100%'),
+						A2($elm$html$Html$Attributes$style, 'aspect-ratio', '1'),
+						A2($elm$html$Html$Attributes$style, 'background', 'rgba(0,0,0,0.6)'),
+						A2(
+						$elm$html$Html$Attributes$style,
+						'border',
+						'1px solid ' + $author$project$Theme$purpleA(0.1)),
+						A2($elm$html$Html$Attributes$style, 'overflow', 'hidden')
+					]),
+				_Utils_ap(
+					_List_fromArray(
+						[
+							A2(
+							$elm$html$Html$div,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'position', 'absolute'),
+									A2($elm$html$Html$Attributes$style, 'top', '0'),
+									A2($elm$html$Html$Attributes$style, 'left', '0'),
+									A2($elm$html$Html$Attributes$style, 'width', '100%'),
+									A2($elm$html$Html$Attributes$style, 'height', '100%'),
+									A2(
+									$elm$html$Html$Attributes$style,
+									'background-image',
+									'linear-gradient(' + ($author$project$Theme$purpleA(0.03) + (' 1px, transparent 1px), linear-gradient(90deg, ' + ($author$project$Theme$purpleA(0.03) + ' 1px, transparent 1px)')))),
+									A2($elm$html$Html$Attributes$style, 'background-size', '40px 40px')
+								]),
+							_List_Nil)
+						]),
+					_Utils_ap(
+						A2($elm$core$List$map, $author$project$Game$viewGameAsteroid, game.asteroids),
+						_Utils_ap(
+							A2($elm$core$List$map, $author$project$Game$viewGameBullet, game.bullets),
+							_Utils_ap(
+								_List_fromArray(
+									[
+										$author$project$Game$viewGameShip(game.ship)
+									]),
+								_Utils_ap(
+									game.gameOver ? _List_fromArray(
+										[
+											$author$project$Game$viewGameOver(game.score)
+										]) : _List_Nil,
+									_List_fromArray(
+										[$author$project$Game$viewCrtScanlines, $author$project$Game$viewCrtVignette]))))))),
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'padding', '8px 12px'),
+						A2(
+						$elm$html$Html$Attributes$style,
+						'background',
+						$author$project$Theme$purpleA(0.02)),
+						A2(
+						$elm$html$Html$Attributes$style,
+						'border',
+						'1px solid ' + $author$project$Theme$purpleA(0.06)),
+						A2($elm$html$Html$Attributes$style, 'border-top', 'none'),
+						A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
+						A2($elm$html$Html$Attributes$style, 'font-size', '9px'),
+						A2(
+						$elm$html$Html$Attributes$style,
+						'color',
+						$author$project$Theme$purpleA(0.25)),
+						A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.05em')
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('WASD / arrows + space to shoot')
+					]))
+			]));
+};
+var $author$project$Main$viewGameWrapper = function (model) {
+	var crtClass = function () {
+		var _v0 = model.resetPhase;
+		switch (_v0.$) {
+			case 'NotResetting':
+				return '';
+			case 'CrtOff':
+				return 'crt-off';
+			default:
+				return 'crt-on';
+		}
+	}();
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class(crtClass),
+				A2($elm$html$Html$Attributes$style, 'transform-origin', 'center center')
+			]),
+		_List_fromArray(
+			[
+				$author$project$Game$viewAsteroidsGame(model.game)
+			]));
+};
 var $elm$virtual_dom$VirtualDom$lazy = _VirtualDom_lazy;
 var $elm$html$Html$Lazy$lazy = $elm$virtual_dom$VirtualDom$lazy;
-var $elm$html$Html$Attributes$id = $elm$html$Html$Attributes$stringProperty('id');
+var $author$project$Theme$viewPanelBottomBar = F2(
+	function (extraAttrs, children) {
+		return A2(
+			$elm$html$Html$div,
+			_Utils_ap(
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+						A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+						A2($elm$html$Html$Attributes$style, 'justify-content', 'space-between'),
+						A2($elm$html$Html$Attributes$style, 'padding', '8px 12px'),
+						A2(
+						$elm$html$Html$Attributes$style,
+						'background',
+						$author$project$Theme$purpleA(0.02)),
+						A2(
+						$elm$html$Html$Attributes$style,
+						'border',
+						'1px solid ' + $author$project$Theme$purpleA(0.06)),
+						A2($elm$html$Html$Attributes$style, 'border-top', 'none'),
+						A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
+						A2($elm$html$Html$Attributes$style, 'font-size', '9px'),
+						A2(
+						$elm$html$Html$Attributes$style,
+						'color',
+						$author$project$Theme$purpleA(0.45)),
+						A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.05em')
+					]),
+				extraAttrs),
+			children);
+	});
+var $author$project$Theme$viewPanelTitleBar = function (title) {
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+				A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+				A2($elm$html$Html$Attributes$style, 'justify-content', 'space-between'),
+				A2($elm$html$Html$Attributes$style, 'padding', '8px 12px'),
+				A2(
+				$elm$html$Html$Attributes$style,
+				'background',
+				$author$project$Theme$purpleA(0.04)),
+				A2(
+				$elm$html$Html$Attributes$style,
+				'border',
+				'1px solid ' + $author$project$Theme$purpleA(0.1)),
+				A2($elm$html$Html$Attributes$style, 'border-bottom', 'none')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
+						A2($elm$html$Html$Attributes$style, 'font-size', '10px'),
+						A2(
+						$elm$html$Html$Attributes$style,
+						'color',
+						$author$project$Theme$purpleA(0.7)),
+						A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.1em')
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text(title)
+					])),
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+						A2($elm$html$Html$Attributes$style, 'gap', '6px')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'width', '8px'),
+								A2($elm$html$Html$Attributes$style, 'height', '8px'),
+								A2($elm$html$Html$Attributes$style, 'border-radius', '50%'),
+								A2(
+								$elm$html$Html$Attributes$style,
+								'background',
+								$author$project$Theme$purpleA(0.2))
+							]),
+						_List_Nil),
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'width', '8px'),
+								A2($elm$html$Html$Attributes$style, 'height', '8px'),
+								A2($elm$html$Html$Attributes$style, 'border-radius', '50%'),
+								A2(
+								$elm$html$Html$Attributes$style,
+								'background',
+								$author$project$Theme$purpleA(0.15))
+							]),
+						_List_Nil),
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'width', '8px'),
+								A2($elm$html$Html$Attributes$style, 'height', '8px'),
+								A2($elm$html$Html$Attributes$style, 'border-radius', '50%'),
+								A2(
+								$elm$html$Html$Attributes$style,
+								'background',
+								$author$project$Theme$purpleA(0.1))
+							]),
+						_List_Nil)
+					]))
+			]));
+};
 var $author$project$Sand$viewSandPanelInner = function (_v0) {
 	return A2(
 		$elm$html$Html$div,
@@ -8138,74 +8560,7 @@ var $author$project$Sand$viewSandPanelInner = function (_v0) {
 			]),
 		_List_fromArray(
 			[
-				A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[
-						A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-						A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-						A2($elm$html$Html$Attributes$style, 'justify-content', 'space-between'),
-						A2($elm$html$Html$Attributes$style, 'padding', '8px 12px'),
-						A2($elm$html$Html$Attributes$style, 'background', 'rgba(168,85,247,0.04)'),
-						A2($elm$html$Html$Attributes$style, 'border', '1px solid rgba(168,85,247,0.1)'),
-						A2($elm$html$Html$Attributes$style, 'border-bottom', 'none')
-					]),
-				_List_fromArray(
-					[
-						A2(
-						$elm$html$Html$div,
-						_List_fromArray(
-							[
-								A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
-								A2($elm$html$Html$Attributes$style, 'font-size', '10px'),
-								A2($elm$html$Html$Attributes$style, 'color', 'rgba(168,85,247,0.7)'),
-								A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.1em')
-							]),
-						_List_fromArray(
-							[
-								$elm$html$Html$text('SAND.EXE')
-							])),
-						A2(
-						$elm$html$Html$div,
-						_List_fromArray(
-							[
-								A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-								A2($elm$html$Html$Attributes$style, 'gap', '6px')
-							]),
-						_List_fromArray(
-							[
-								A2(
-								$elm$html$Html$div,
-								_List_fromArray(
-									[
-										A2($elm$html$Html$Attributes$style, 'width', '8px'),
-										A2($elm$html$Html$Attributes$style, 'height', '8px'),
-										A2($elm$html$Html$Attributes$style, 'border-radius', '50%'),
-										A2($elm$html$Html$Attributes$style, 'background', 'rgba(168,85,247,0.2)')
-									]),
-								_List_Nil),
-								A2(
-								$elm$html$Html$div,
-								_List_fromArray(
-									[
-										A2($elm$html$Html$Attributes$style, 'width', '8px'),
-										A2($elm$html$Html$Attributes$style, 'height', '8px'),
-										A2($elm$html$Html$Attributes$style, 'border-radius', '50%'),
-										A2($elm$html$Html$Attributes$style, 'background', 'rgba(168,85,247,0.15)')
-									]),
-								_List_Nil),
-								A2(
-								$elm$html$Html$div,
-								_List_fromArray(
-									[
-										A2($elm$html$Html$Attributes$style, 'width', '8px'),
-										A2($elm$html$Html$Attributes$style, 'height', '8px'),
-										A2($elm$html$Html$Attributes$style, 'border-radius', '50%'),
-										A2($elm$html$Html$Attributes$style, 'background', 'rgba(168,85,247,0.1)')
-									]),
-								_List_Nil)
-							]))
-					])),
+				$author$project$Theme$viewPanelTitleBar('SAND.EXE'),
 				A2(
 				$elm$html$Html$div,
 				_List_fromArray(
@@ -8214,28 +8569,20 @@ var $author$project$Sand$viewSandPanelInner = function (_v0) {
 						A2($elm$html$Html$Attributes$style, 'position', 'relative'),
 						A2($elm$html$Html$Attributes$style, 'width', '100%'),
 						A2($elm$html$Html$Attributes$style, 'aspect-ratio', '3 / 2'),
-						A2($elm$html$Html$Attributes$style, 'border', '1px solid rgba(168,85,247,0.1)'),
+						A2(
+						$elm$html$Html$Attributes$style,
+						'border',
+						'1px solid ' + $author$project$Theme$purpleA(0.1)),
 						A2($elm$html$Html$Attributes$style, 'cursor', 'crosshair'),
 						A2($elm$html$Html$Attributes$style, 'overflow', 'hidden'),
 						A2($elm$html$Html$Attributes$style, 'background', '#000')
 					]),
 				_List_Nil),
 				A2(
-				$elm$html$Html$div,
+				$author$project$Theme$viewPanelBottomBar,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$id('sand-bottom-bar'),
-						A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-						A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-						A2($elm$html$Html$Attributes$style, 'justify-content', 'space-between'),
-						A2($elm$html$Html$Attributes$style, 'padding', '8px 12px'),
-						A2($elm$html$Html$Attributes$style, 'background', 'rgba(168,85,247,0.02)'),
-						A2($elm$html$Html$Attributes$style, 'border', '1px solid rgba(168,85,247,0.06)'),
-						A2($elm$html$Html$Attributes$style, 'border-top', 'none'),
-						A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
-						A2($elm$html$Html$Attributes$style, 'font-size', '9px'),
-						A2($elm$html$Html$Attributes$style, 'color', 'rgba(168,85,247,0.45)'),
-						A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.05em')
+						$elm$html$Html$Attributes$id('sand-bottom-bar')
 					]),
 				_List_fromArray(
 					[
@@ -8262,9 +8609,12 @@ var $author$project$Main$viewSectionDivider = function (label) {
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
+						A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
 						A2($elm$html$Html$Attributes$style, 'font-size', '11px'),
-						A2($elm$html$Html$Attributes$style, 'color', 'rgba(168,85,247,0.5)'),
+						A2(
+						$elm$html$Html$Attributes$style,
+						'color',
+						$author$project$Theme$purpleA(0.5)),
 						A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.15em'),
 						A2($elm$html$Html$Attributes$style, 'white-space', 'nowrap')
 					]),
@@ -8278,7 +8628,10 @@ var $author$project$Main$viewSectionDivider = function (label) {
 					[
 						A2($elm$html$Html$Attributes$style, 'flex', '1'),
 						A2($elm$html$Html$Attributes$style, 'height', '1px'),
-						A2($elm$html$Html$Attributes$style, 'background', 'linear-gradient(90deg, rgba(168,85,247,0.1), transparent)')
+						A2(
+						$elm$html$Html$Attributes$style,
+						'background',
+						'linear-gradient(90deg, ' + ($author$project$Theme$purpleA(0.1) + ', transparent)'))
 					]),
 				_List_Nil)
 			]));
@@ -8297,7 +8650,10 @@ var $author$project$Main$viewTerminalActiveLine = function (current) {
 				$elm$html$Html$span,
 				_List_fromArray(
 					[
-						A2($elm$html$Html$Attributes$style, 'color', 'rgba(168,85,247,0.85)'),
+						A2(
+						$elm$html$Html$Attributes$style,
+						'color',
+						$author$project$Theme$purpleA(0.85)),
 						A2($elm$html$Html$Attributes$style, 'white-space', 'pre-wrap')
 					]),
 				_List_fromArray(
@@ -8311,7 +8667,10 @@ var $author$project$Main$viewTerminalActiveLine = function (current) {
 						A2($elm$html$Html$Attributes$style, 'display', 'inline-block'),
 						A2($elm$html$Html$Attributes$style, 'width', '7px'),
 						A2($elm$html$Html$Attributes$style, 'height', '14px'),
-						A2($elm$html$Html$Attributes$style, 'background', 'rgba(168,85,247,0.6)'),
+						A2(
+						$elm$html$Html$Attributes$style,
+						'background',
+						$author$project$Theme$purpleA(0.6)),
 						A2($elm$html$Html$Attributes$style, 'margin-left', '1px'),
 						A2($elm$html$Html$Attributes$style, 'animation', 'termCursor 1s steps(1) infinite')
 					]),
@@ -8320,7 +8679,7 @@ var $author$project$Main$viewTerminalActiveLine = function (current) {
 };
 var $author$project$Main$viewTerminalLine = function (line) {
 	var isCommand = A2($elm$core$String$startsWith, '$', line);
-	var color = isCommand ? 'rgba(168,85,247,0.85)' : 'rgba(196,195,200,0.75)';
+	var color = isCommand ? $author$project$Theme$purpleA(0.85) : 'rgba(196,195,200,0.75)';
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
@@ -8350,85 +8709,21 @@ var $author$project$Main$viewTerminal = function (model) {
 		_List_Nil,
 		_List_fromArray(
 			[
-				A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[
-						A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-						A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-						A2($elm$html$Html$Attributes$style, 'justify-content', 'space-between'),
-						A2($elm$html$Html$Attributes$style, 'padding', '8px 12px'),
-						A2($elm$html$Html$Attributes$style, 'background', 'rgba(168,85,247,0.04)'),
-						A2($elm$html$Html$Attributes$style, 'border', '1px solid rgba(168,85,247,0.1)'),
-						A2($elm$html$Html$Attributes$style, 'border-bottom', 'none')
-					]),
-				_List_fromArray(
-					[
-						A2(
-						$elm$html$Html$div,
-						_List_fromArray(
-							[
-								A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
-								A2($elm$html$Html$Attributes$style, 'font-size', '12px'),
-								A2($elm$html$Html$Attributes$style, 'color', 'rgba(168,85,247,0.7)'),
-								A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.1em')
-							]),
-						_List_fromArray(
-							[
-								$elm$html$Html$text('TERMINAL.SH')
-							])),
-						A2(
-						$elm$html$Html$div,
-						_List_fromArray(
-							[
-								A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-								A2($elm$html$Html$Attributes$style, 'gap', '6px')
-							]),
-						_List_fromArray(
-							[
-								A2(
-								$elm$html$Html$div,
-								_List_fromArray(
-									[
-										A2($elm$html$Html$Attributes$style, 'width', '8px'),
-										A2($elm$html$Html$Attributes$style, 'height', '8px'),
-										A2($elm$html$Html$Attributes$style, 'border-radius', '50%'),
-										A2($elm$html$Html$Attributes$style, 'background', 'rgba(168,85,247,0.2)')
-									]),
-								_List_Nil),
-								A2(
-								$elm$html$Html$div,
-								_List_fromArray(
-									[
-										A2($elm$html$Html$Attributes$style, 'width', '8px'),
-										A2($elm$html$Html$Attributes$style, 'height', '8px'),
-										A2($elm$html$Html$Attributes$style, 'border-radius', '50%'),
-										A2($elm$html$Html$Attributes$style, 'background', 'rgba(168,85,247,0.15)')
-									]),
-								_List_Nil),
-								A2(
-								$elm$html$Html$div,
-								_List_fromArray(
-									[
-										A2($elm$html$Html$Attributes$style, 'width', '8px'),
-										A2($elm$html$Html$Attributes$style, 'height', '8px'),
-										A2($elm$html$Html$Attributes$style, 'border-radius', '50%'),
-										A2($elm$html$Html$Attributes$style, 'background', 'rgba(168,85,247,0.1)')
-									]),
-								_List_Nil)
-							]))
-					])),
+				$author$project$Theme$viewPanelTitleBar('TERMINAL.SH'),
 				A2(
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
 						A2($elm$html$Html$Attributes$style, 'background', 'rgba(0,0,0,0.6)'),
-						A2($elm$html$Html$Attributes$style, 'border', '1px solid rgba(168,85,247,0.1)'),
+						A2(
+						$elm$html$Html$Attributes$style,
+						'border',
+						'1px solid ' + $author$project$Theme$purpleA(0.1)),
 						A2($elm$html$Html$Attributes$style, 'padding', '16px'),
 						A2($elm$html$Html$Attributes$style, 'min-height', '280px'),
 						A2($elm$html$Html$Attributes$style, 'max-height', '360px'),
 						A2($elm$html$Html$Attributes$style, 'overflow', 'hidden'),
-						A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
+						A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
 						A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
 						A2($elm$html$Html$Attributes$style, 'line-height', '1.7')
 					]),
@@ -8446,8 +8741,7 @@ var $author$project$Main$viewMainContent = function (model) {
 		A2($author$project$Cards$viewCrystalCard, $author$project$Main$ToggleCard, model.expandedCards),
 		$author$project$Cards$crystalData);
 	var getCard = function (idx) {
-		var _v0 = $elm$core$List$head(
-			A2($elm$core$List$drop, idx, cards));
+		var _v0 = A2($author$project$Theme$getAt, idx, cards);
 		if (_v0.$ === 'Just') {
 			var card = _v0.a;
 			return card;
@@ -8479,9 +8773,12 @@ var $author$project$Main$viewMainContent = function (model) {
 						$elm$html$Html$div,
 						_List_fromArray(
 							[
-								A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
+								A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
 								A2($elm$html$Html$Attributes$style, 'font-size', '12px'),
-								A2($elm$html$Html$Attributes$style, 'color', 'rgba(168,85,247,0.55)'),
+								A2(
+								$elm$html$Html$Attributes$style,
+								'color',
+								$author$project$Theme$purpleA(0.55)),
 								A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.15em'),
 								A2($elm$html$Html$Attributes$style, 'margin-bottom', '12px')
 							]),
@@ -8503,10 +8800,10 @@ var $author$project$Main$viewMainContent = function (model) {
 								$elm$html$Html$div,
 								_List_fromArray(
 									[
-										A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
+										A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
 										A2($elm$html$Html$Attributes$style, 'font-size', 'clamp(24px, 3.5vw, 36px)'),
 										A2($elm$html$Html$Attributes$style, 'font-weight', '700'),
-										A2($elm$html$Html$Attributes$style, 'color', '#eeedf0'),
+										A2($elm$html$Html$Attributes$style, 'color', $author$project$Theme$textLight),
 										A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.1em')
 									]),
 								_List_fromArray(
@@ -8519,16 +8816,22 @@ var $author$project$Main$viewMainContent = function (model) {
 									[
 										A2($elm$html$Html$Attributes$style, 'flex', '1'),
 										A2($elm$html$Html$Attributes$style, 'height', '1px'),
-										A2($elm$html$Html$Attributes$style, 'background', 'linear-gradient(90deg, rgba(168,85,247,0.15), transparent)')
+										A2(
+										$elm$html$Html$Attributes$style,
+										'background',
+										'linear-gradient(90deg, ' + ($author$project$Theme$purpleA(0.15) + ', transparent)'))
 									]),
 								_List_Nil),
 								A2(
 								$elm$html$Html$div,
 								_List_fromArray(
 									[
-										A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
+										A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
 										A2($elm$html$Html$Attributes$style, 'font-size', '12px'),
-										A2($elm$html$Html$Attributes$style, 'color', 'rgba(168,85,247,0.45)')
+										A2(
+										$elm$html$Html$Attributes$style,
+										'color',
+										$author$project$Theme$purpleA(0.45))
 									]),
 								_List_fromArray(
 									[
@@ -8556,7 +8859,7 @@ var $author$project$Main$viewMainContent = function (model) {
 					[
 						$elm$html$Html$Attributes$class('section-grid'),
 						A2($elm$html$Html$Attributes$style, 'display', 'grid'),
-						A2($elm$html$Html$Attributes$style, 'grid-template-columns', '1fr 420px'),
+						A2($elm$html$Html$Attributes$style, 'grid-template-columns', '1fr 460px'),
 						A2($elm$html$Html$Attributes$style, 'gap', '20px'),
 						A2($elm$html$Html$Attributes$style, 'align-items', 'start'),
 						A2($elm$html$Html$Attributes$style, 'margin-bottom', '48px')
@@ -8587,23 +8890,24 @@ var $author$project$Main$viewMainContent = function (model) {
 								$elm$json$Json$Decode$succeed(
 									_Utils_Tuple2(
 										$author$project$Main$FocusPanel($author$project$Main$AsteroidsPanel),
-										true)))
+										true))),
+								$elm$html$Html$Attributes$id('asteroids-panel')
 							]),
 						_List_fromArray(
 							[
-								$author$project$Game$viewAsteroidsGame(model.game)
+								$author$project$Main$viewGameWrapper(model)
+							])),
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('span-full'),
+								A2($elm$html$Html$Attributes$style, 'grid-column', '1 / -1')
+							]),
+						_List_fromArray(
+							[
+								getCard(3)
 							]))
-					])),
-				$author$project$Main$viewSectionDivider('EDUCATION'),
-				A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[
-						A2($elm$html$Html$Attributes$style, 'margin-bottom', '48px')
-					]),
-				_List_fromArray(
-					[
-						getCard(3)
 					])),
 				$author$project$Main$viewSectionDivider('PROJECTS'),
 				A2(
@@ -8629,10 +8933,21 @@ var $author$project$Main$viewMainContent = function (model) {
 							]),
 						_List_fromArray(
 							[
-								getCard(4),
-								getCard(5)
+								getCard(5),
+								getCard(6)
 							])),
-						$author$project$Main$viewTerminal(model)
+						$author$project$Main$viewTerminal(model),
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('span-full'),
+								A2($elm$html$Html$Attributes$style, 'grid-column', '1 / -1')
+							]),
+						_List_fromArray(
+							[
+								getCard(4)
+							]))
 					])),
 				$author$project$Main$viewSectionDivider('GALLERY'),
 				A2(
@@ -8658,10 +8973,19 @@ var $author$project$Main$viewMarquee = A2(
 		[
 			A2($elm$html$Html$Attributes$style, 'position', 'relative'),
 			A2($elm$html$Html$Attributes$style, 'overflow', 'hidden'),
-			A2($elm$html$Html$Attributes$style, 'border-top', '1px solid rgba(168,85,247,0.08)'),
-			A2($elm$html$Html$Attributes$style, 'border-bottom', '1px solid rgba(168,85,247,0.08)'),
+			A2(
+			$elm$html$Html$Attributes$style,
+			'border-top',
+			'1px solid ' + $author$project$Theme$purpleA(0.08)),
+			A2(
+			$elm$html$Html$Attributes$style,
+			'border-bottom',
+			'1px solid ' + $author$project$Theme$purpleA(0.08)),
 			A2($elm$html$Html$Attributes$style, 'padding', '12px 0'),
-			A2($elm$html$Html$Attributes$style, 'background', 'rgba(168,85,247,0.015)'),
+			A2(
+			$elm$html$Html$Attributes$style,
+			'background',
+			$author$project$Theme$purpleA(0.015)),
 			A2($elm$html$Html$Attributes$style, 'z-index', '1')
 		]),
 	_List_fromArray(
@@ -8673,10 +8997,13 @@ var $author$project$Main$viewMarquee = A2(
 					A2($elm$html$Html$Attributes$style, 'display', 'inline-block'),
 					A2($elm$html$Html$Attributes$style, 'white-space', 'nowrap'),
 					A2($elm$html$Html$Attributes$style, 'animation', 'marquee 30s linear infinite'),
-					A2($elm$html$Html$Attributes$style, 'font-family', '\'Space Mono\', monospace'),
+					A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$monoFont),
 					A2($elm$html$Html$Attributes$style, 'font-size', '12px'),
 					A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.2em'),
-					A2($elm$html$Html$Attributes$style, 'color', 'rgba(168,85,247,0.7)'),
+					A2(
+					$elm$html$Html$Attributes$style,
+					'color',
+					$author$project$Theme$purpleA(0.7)),
 					A2($elm$html$Html$Attributes$style, 'text-transform', 'uppercase')
 				]),
 			_List_fromArray(
@@ -8690,92 +9017,115 @@ var $author$project$Starfield$blackHoles = _List_fromArray(
 		{cycleSpeed: 22000, mass: 28, phase: 4000, x: 78, y: 45},
 		{cycleSpeed: 16000, mass: 20, phase: 9000, x: 45, y: 75}
 	]);
-var $author$project$Starfield$frac = function (f) {
-	return f - $elm$core$Basics$floor(f);
-};
-var $author$project$Starfield$ferrisField = A2(
-	$elm$core$List$indexedMap,
-	F2(
-		function (i, _v0) {
-			var fi = i + 500;
-			var h1 = $author$project$Starfield$frac((fi * 173.7) + 491.3);
-			var h2 = $author$project$Starfield$frac((fi * 311.1) + 257.9);
-			var h3 = $author$project$Starfield$frac((fi * 523.7) + 139.1);
-			return {
-				opacity: 0.12 + ($author$project$Starfield$frac(h2 * 3.91) * 0.1),
-				rotation: $author$project$Starfield$frac((h3 * h1) * 17593.1) * 360,
-				seed: (fi * 1.618) + (h3 * 50),
-				size: 35 + ($author$project$Starfield$frac(h1 * 7.31) * 25),
-				x: $author$project$Starfield$frac((h1 * h2) * 43758.5453) * 100,
-				y: $author$project$Starfield$frac((h2 * h3) * 29187.3127) * 100
-			};
-		}),
-	A2($elm$core$List$range, 0, 9));
-var $author$project$Starfield$starField = _Utils_ap(
-	A2(
+var $author$project$Starfield$generateFerrisField = function (seed) {
+	return A2(
 		$elm$core$List$indexedMap,
 		F2(
 			function (i, _v0) {
-				var fi = i;
-				var h1 = $author$project$Starfield$frac((fi * 127.1) + 311.7);
-				var h2 = $author$project$Starfield$frac((fi * 269.5) + 183.3);
-				var h3 = $author$project$Starfield$frac((fi * 419.2) + 371.9);
+				var fi = (i + 500) * ((seed * 99991) + 1);
+				var h1 = $author$project$Theme$frac((fi * 173.7) + 491.3);
+				var h2 = $author$project$Theme$frac((fi * 311.1) + 257.9);
+				var h3 = $author$project$Theme$frac((fi * 523.7) + 139.1);
 				return {
-					brightness: 0.25 + ($author$project$Starfield$frac(h2 * 11.37) * 0.25),
-					depth: 0.1 + ($author$project$Starfield$frac(h3 * 17.31) * 0.15),
-					seed: (fi * 2.718) + (h1 * 100),
-					size: 0.8 + ($author$project$Starfield$frac(h1 * 3.71) * 0.5),
-					x: $author$project$Starfield$frac((h1 * h2) * 43758.5453) * 100,
-					y: $author$project$Starfield$frac((h2 * h3) * 29187.3127) * 100
+					opacity: 0.12 + ($author$project$Theme$frac(h2 * 3.91) * 0.1),
+					rotation: $author$project$Theme$frac((h3 * h1) * 17593.1) * 360,
+					seed: (fi * 1.618) + (h3 * 50),
+					size: 35 + ($author$project$Theme$frac(h1 * 7.31) * 25),
+					x: $author$project$Theme$frac((h1 * h2) * 43758.5453) * 100,
+					y: $author$project$Theme$frac((h2 * h3) * 29187.3127) * 100
 				};
 			}),
-		A2($elm$core$List$range, 0, 49)),
+		A2($elm$core$List$range, 0, 19));
+};
+var $author$project$Starfield$generateStarLayer = function (config) {
+	return A2(
+		$elm$core$List$indexedMap,
+		F2(
+			function (i, _v0) {
+				var fi = i + config.indexOffset;
+				var h1 = $author$project$Theme$frac((fi * config.hashSeeds.a) + config.hashSeeds.b);
+				var h2 = $author$project$Theme$frac((fi * config.hashSeeds.c) + config.hashSeeds.d);
+				var h3 = $author$project$Theme$frac((fi * config.hashSeeds.e) + config.hashSeeds.f);
+				var seedHash = (config.seedHashIndex === 1) ? h1 : ((config.seedHashIndex === 2) ? h2 : h3);
+				return {
+					brightness: config.brightMin + ($author$project$Theme$frac(h2 * config.brightMul) * config.brightRange),
+					depth: config.depthMin + ($author$project$Theme$frac(h3 * config.depthMul) * config.depthRange),
+					seed: (fi * config.seedFactor) + (seedHash * config.seedMix),
+					size: config.sizeMin + ($author$project$Theme$frac(h1 * config.sizeMul) * config.sizeRange),
+					x: $author$project$Theme$frac((h1 * h2) * 43758.5453) * 100,
+					y: $author$project$Theme$frac((h2 * h3) * 29187.3127) * 100
+				};
+			}),
+		A2($elm$core$List$range, 0, config.count - 1));
+};
+var $author$project$Starfield$starField = _Utils_ap(
+	$author$project$Starfield$generateStarLayer(
+		{
+			brightMin: 0.25,
+			brightMul: 11.37,
+			brightRange: 0.25,
+			count: 50,
+			depthMin: 0.1,
+			depthMul: 17.31,
+			depthRange: 0.15,
+			hashSeeds: {a: 127.1, b: 311.7, c: 269.5, d: 183.3, e: 419.2, f: 371.9},
+			indexOffset: 0,
+			seedFactor: 2.718,
+			seedHashIndex: 1,
+			seedMix: 100,
+			sizeMin: 0.8,
+			sizeMul: 3.71,
+			sizeRange: 0.5
+		}),
 	_Utils_ap(
-		A2(
-			$elm$core$List$indexedMap,
-			F2(
-				function (i, _v1) {
-					var fi = i + 100;
-					var h1 = $author$project$Starfield$frac((fi * 157.3) + 217.1);
-					var h2 = $author$project$Starfield$frac((fi * 337.9) + 113.7);
-					var h3 = $author$project$Starfield$frac((fi * 281.5) + 479.3);
-					return {
-						brightness: 0.35 + ($author$project$Starfield$frac(h2 * 5.43) * 0.3),
-						depth: 0.35 + ($author$project$Starfield$frac(h3 * 13.17) * 0.2),
-						seed: (fi * 1.414) + (h2 * 80),
-						size: 1.0 + ($author$project$Starfield$frac(h1 * 7.93) * 0.8),
-						x: $author$project$Starfield$frac((h1 * h2) * 43758.5453) * 100,
-						y: $author$project$Starfield$frac((h2 * h3) * 29187.3127) * 100
-					};
-				}),
-			A2($elm$core$List$range, 0, 29)),
-		A2(
-			$elm$core$List$indexedMap,
-			F2(
-				function (i, _v2) {
-					var fi = i + 200;
-					var h1 = $author$project$Starfield$frac((fi * 213.7) + 511.3);
-					var h2 = $author$project$Starfield$frac((fi * 179.1) + 389.7);
-					var h3 = $author$project$Starfield$frac((fi * 347.3) + 197.1);
-					return {
-						brightness: 0.5 + ($author$project$Starfield$frac(h2 * 7.91) * 0.5),
-						depth: 0.7 + ($author$project$Starfield$frac(h3 * 9.71) * 0.25),
-						seed: (fi * 3.141) + (h3 * 60),
-						size: 1.8 + ($author$project$Starfield$frac(h1 * 5.17) * 1.2),
-						x: $author$project$Starfield$frac((h1 * h2) * 43758.5453) * 100,
-						y: $author$project$Starfield$frac((h2 * h3) * 29187.3127) * 100
-					};
-				}),
-			A2($elm$core$List$range, 0, 14))));
+		$author$project$Starfield$generateStarLayer(
+			{
+				brightMin: 0.35,
+				brightMul: 5.43,
+				brightRange: 0.3,
+				count: 30,
+				depthMin: 0.35,
+				depthMul: 13.17,
+				depthRange: 0.2,
+				hashSeeds: {a: 157.3, b: 217.1, c: 337.9, d: 113.7, e: 281.5, f: 479.3},
+				indexOffset: 100,
+				seedFactor: 1.414,
+				seedHashIndex: 2,
+				seedMix: 80,
+				sizeMin: 1.0,
+				sizeMul: 7.93,
+				sizeRange: 0.8
+			}),
+		$author$project$Starfield$generateStarLayer(
+			{
+				brightMin: 0.5,
+				brightMul: 7.91,
+				brightRange: 0.5,
+				count: 15,
+				depthMin: 0.7,
+				depthMul: 9.71,
+				depthRange: 0.25,
+				hashSeeds: {a: 213.7, b: 511.3, c: 179.1, d: 389.7, e: 347.3, f: 197.1},
+				indexOffset: 200,
+				seedFactor: 3.141,
+				seedHashIndex: 3,
+				seedMix: 60,
+				sizeMin: 1.8,
+				sizeMul: 5.17,
+				sizeRange: 1.2
+			})));
 var $elm$core$Basics$abs = function (n) {
 	return (n < 0) ? (-n) : n;
 };
+var $author$project$Starfield$blackHoleCoreVisibility = function (cycleT) {
+	return (cycleT < 0.15) ? 0 : ((cycleT < 0.4) ? ((cycleT - 0.15) / 0.25) : ((cycleT < 0.6) ? 1.0 : ((cycleT < 0.75) ? (1.0 - ((cycleT - 0.6) / 0.15)) : 0)));
+};
 var $author$project$Starfield$viewBlackHole = F2(
-	function (time, bh) {
-		var cycleT = $author$project$Starfield$frac((time + bh.phase) / bh.cycleSpeed);
+	function (time, blackHole) {
+		var cycleT = $author$project$Theme$frac((time + blackHole.phase) / blackHole.cycleSpeed);
 		var flashOpacity = ((cycleT > 0.58) && (cycleT < 0.65)) ? ((1 - ($elm$core$Basics$abs(cycleT - 0.615) / 0.035)) * 0.4) : 0;
-		var coreVisibility = (cycleT < 0.15) ? 0 : ((cycleT < 0.4) ? ((cycleT - 0.15) / 0.25) : ((cycleT < 0.6) ? 1.0 : ((cycleT < 0.75) ? (1.0 - ((cycleT - 0.6) / 0.15)) : 0)));
-		var diskSize = (bh.mass * 0.8) * coreVisibility;
+		var coreVisibility = $author$project$Starfield$blackHoleCoreVisibility(cycleT);
+		var diskSize = (blackHole.mass * 0.8) * coreVisibility;
 		var coreGlow = coreVisibility * 0.6;
 		return A2(
 			$elm$html$Html$div,
@@ -8790,11 +9140,11 @@ var $author$project$Starfield$viewBlackHole = F2(
 							A2(
 							$elm$html$Html$Attributes$style,
 							'left',
-							'calc(' + ($elm$core$String$fromFloat(bh.x) + ('% - ' + ($elm$core$String$fromFloat(diskSize * 2) + 'px)')))),
+							'calc(' + ($elm$core$String$fromFloat(blackHole.x) + ('% - ' + ($elm$core$String$fromFloat(diskSize * 2) + 'px)')))),
 							A2(
 							$elm$html$Html$Attributes$style,
 							'top',
-							'calc(' + ($elm$core$String$fromFloat(bh.y) + ('% - ' + ($elm$core$String$fromFloat(diskSize * 0.6) + 'px)')))),
+							'calc(' + ($elm$core$String$fromFloat(blackHole.y) + ('% - ' + ($elm$core$String$fromFloat(diskSize * 0.6) + 'px)')))),
 							A2(
 							$elm$html$Html$Attributes$style,
 							'width',
@@ -8807,11 +9157,11 @@ var $author$project$Starfield$viewBlackHole = F2(
 							A2(
 							$elm$html$Html$Attributes$style,
 							'border',
-							'1px solid rgba(168,85,247,' + ($elm$core$String$fromFloat(coreVisibility * 0.3) + ')')),
+							'1px solid ' + $author$project$Theme$purpleA(coreVisibility * 0.3)),
 							A2(
 							$elm$html$Html$Attributes$style,
 							'box-shadow',
-							'0 0 ' + ($elm$core$String$fromFloat(diskSize * 0.5) + ('px rgba(168,85,247,' + ($elm$core$String$fromFloat(coreVisibility * 0.15) + ')')))),
+							'0 0 ' + ($elm$core$String$fromFloat(diskSize * 0.5) + ('px ' + $author$project$Theme$purpleA(coreVisibility * 0.15)))),
 							A2($elm$html$Html$Attributes$style, 'animation', 'accrete 4s linear infinite'),
 							A2(
 							$elm$html$Html$Attributes$style,
@@ -8827,19 +9177,22 @@ var $author$project$Starfield$viewBlackHole = F2(
 							A2(
 							$elm$html$Html$Attributes$style,
 							'left',
-							'calc(' + ($elm$core$String$fromFloat(bh.x) + '% - 6px)')),
+							'calc(' + ($elm$core$String$fromFloat(blackHole.x) + '% - 6px)')),
 							A2(
 							$elm$html$Html$Attributes$style,
 							'top',
-							'calc(' + ($elm$core$String$fromFloat(bh.y) + '% - 6px)')),
+							'calc(' + ($elm$core$String$fromFloat(blackHole.y) + '% - 6px)')),
 							A2($elm$html$Html$Attributes$style, 'width', '12px'),
 							A2($elm$html$Html$Attributes$style, 'height', '12px'),
 							A2($elm$html$Html$Attributes$style, 'border-radius', '50%'),
-							A2($elm$html$Html$Attributes$style, 'background', 'radial-gradient(circle, #020005 40%, rgba(168,85,247,0.3) 70%, transparent 100%)'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'background',
+							'radial-gradient(circle, #020005 40%, ' + ($author$project$Theme$purpleA(0.3) + ' 70%, transparent 100%)')),
 							A2(
 							$elm$html$Html$Attributes$style,
 							'box-shadow',
-							'0 0 20px rgba(168,85,247,' + ($elm$core$String$fromFloat(coreGlow * 0.4) + ('), 0 0 40px rgba(100,50,200,' + ($elm$core$String$fromFloat(coreGlow * 0.2) + ')')))),
+							'0 0 20px ' + ($author$project$Theme$purpleA(coreGlow * 0.4) + (', 0 0 40px rgba(100,50,200,' + ($elm$core$String$fromFloat(coreGlow * 0.2) + ')')))),
 							A2(
 							$elm$html$Html$Attributes$style,
 							'opacity',
@@ -8854,15 +9207,18 @@ var $author$project$Starfield$viewBlackHole = F2(
 							A2(
 							$elm$html$Html$Attributes$style,
 							'left',
-							'calc(' + ($elm$core$String$fromFloat(bh.x) + '% - 40px)')),
+							'calc(' + ($elm$core$String$fromFloat(blackHole.x) + '% - 40px)')),
 							A2(
 							$elm$html$Html$Attributes$style,
 							'top',
-							'calc(' + ($elm$core$String$fromFloat(bh.y) + '% - 40px)')),
+							'calc(' + ($elm$core$String$fromFloat(blackHole.y) + '% - 40px)')),
 							A2($elm$html$Html$Attributes$style, 'width', '80px'),
 							A2($elm$html$Html$Attributes$style, 'height', '80px'),
 							A2($elm$html$Html$Attributes$style, 'border-radius', '50%'),
-							A2($elm$html$Html$Attributes$style, 'background', 'radial-gradient(circle, rgba(200,170,255,0.8) 0%, rgba(168,85,247,0.3) 30%, transparent 70%)'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'background',
+							'radial-gradient(circle, rgba(200,170,255,0.8) 0%, ' + ($author$project$Theme$purpleA(0.3) + ' 30%, transparent 70%)')),
 							A2(
 							$elm$html$Html$Attributes$style,
 							'opacity',
@@ -8921,9 +9277,18 @@ var $author$project$Starfield$viewFerris = F2(
 							A2($elm$html$Html$Attributes$style, 'width', '80%'),
 							A2($elm$html$Html$Attributes$style, 'height', '140%'),
 							A2($elm$html$Html$Attributes$style, 'border-radius', '50%'),
-							A2($elm$html$Html$Attributes$style, 'background', 'rgba(168,85,247,0.04)'),
-							A2($elm$html$Html$Attributes$style, 'border', '1px solid rgba(168,85,247,0.15)'),
-							A2($elm$html$Html$Attributes$style, 'box-shadow', '0 0 8px rgba(168,85,247,0.1)')
+							A2(
+							$elm$html$Html$Attributes$style,
+							'background',
+							$author$project$Theme$purpleA(0.04)),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'border',
+							'1px solid ' + $author$project$Theme$purpleA(0.15)),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'box-shadow',
+							'0 0 8px ' + $author$project$Theme$purpleA(0.1))
 						]),
 					_List_Nil),
 					A2(
@@ -8946,7 +9311,10 @@ var $author$project$Starfield$viewFerris = F2(
 							A2($elm$html$Html$Attributes$style, 'right', '28%'),
 							A2($elm$html$Html$Attributes$style, 'width', '2px'),
 							A2($elm$html$Html$Attributes$style, 'height', '18%'),
-							A2($elm$html$Html$Attributes$style, 'background', 'rgba(168,85,247,0.4)'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'background',
+							$author$project$Theme$purpleA(0.4)),
 							A2($elm$html$Html$Attributes$style, 'transform', 'rotate(-15deg)'),
 							A2($elm$html$Html$Attributes$style, 'transform-origin', 'bottom center')
 						]),
@@ -8962,32 +9330,38 @@ var $author$project$Starfield$viewFerris = F2(
 									A2($elm$html$Html$Attributes$style, 'width', '8px'),
 									A2($elm$html$Html$Attributes$style, 'height', '8px'),
 									A2($elm$html$Html$Attributes$style, 'border-radius', '50%'),
-									A2($elm$html$Html$Attributes$style, 'background', 'rgba(168,85,247,0.35)')
+									A2(
+									$elm$html$Html$Attributes$style,
+									'background',
+									$author$project$Theme$purpleA(0.35))
 								]),
 							_List_Nil)
 						]))
 				]));
 	});
+var $author$project$Starfield$blackHoleCycleActivity = function (cycleT) {
+	return (cycleT < 0.15) ? 0 : ((cycleT < 0.4) ? ((cycleT - 0.15) / 0.25) : ((cycleT < 0.6) ? 1.0 : ((cycleT < 0.75) ? (-(1.0 - ((cycleT - 0.6) / 0.15))) : ((-(1.0 - ((cycleT - 0.75) / 0.25))) * 0.3))));
+};
 var $elm$core$Basics$pow = _Basics_pow;
 var $author$project$Starfield$applyGravity = F3(
-	function (time, bh, acc) {
-		var sy = acc.gy;
-		var sx = acc.gx;
-		var dy = sy - bh.y;
-		var dx = sx - bh.x;
+	function (time, blackHole, acc) {
+		var sy = acc.posY;
+		var sx = acc.posX;
+		var dy = sy - blackHole.y;
+		var dx = sx - blackHole.x;
 		var dist = $elm$core$Basics$sqrt((dx * dx) + (dy * dy));
-		var influence = (_Utils_cmp(dist, bh.mass) < 0) ? A2($elm$core$Basics$pow, 1 - (dist / bh.mass), 2) : 0;
-		var cycleT = $author$project$Starfield$frac((time + bh.phase) / bh.cycleSpeed);
-		var activity = (cycleT < 0.15) ? 0 : ((cycleT < 0.4) ? ((cycleT - 0.15) / 0.25) : ((cycleT < 0.6) ? 1.0 : ((cycleT < 0.75) ? (-(1.0 - ((cycleT - 0.6) / 0.15))) : ((-(1.0 - ((cycleT - 0.75) / 0.25))) * 0.3))));
+		var influence = (_Utils_cmp(dist, blackHole.mass) < 0) ? A2($elm$core$Basics$pow, 1 - (dist / blackHole.mass), 2) : 0;
+		var cycleT = $author$project$Theme$frac((time + blackHole.phase) / blackHole.cycleSpeed);
+		var activity = $author$project$Starfield$blackHoleCycleActivity(cycleT);
 		var pullStrength = activity * influence;
 		var opacityEffect = (pullStrength > 0.8) ? (1 - ((pullStrength - 0.8) / 0.2)) : ((_Utils_cmp(pullStrength, -0.5) < 0) ? 0.4 : 1.0);
-		var pullX = (dist < 0.01) ? 0 : ((((dx / dist) * pullStrength) * bh.mass) * 0.6);
-		var pullY = (dist < 0.01) ? 0 : ((((dy / dist) * pullStrength) * bh.mass) * 0.6);
+		var pullX = (dist < 0.01) ? 0 : ((((dx / dist) * pullStrength) * blackHole.mass) * 0.6);
+		var pullY = (dist < 0.01) ? 0 : ((((dy / dist) * pullStrength) * blackHole.mass) * 0.6);
 		var scaleEffect = (pullStrength > 0) ? (1 - (pullStrength * 0.7)) : (1 + ($elm$core$Basics$abs(pullStrength) * 0.5));
 		var spiralAngle = (pullStrength > 0) ? (pullStrength * 2.5) : 0;
 		var cosA = $elm$core$Basics$cos(spiralAngle);
 		var sinA = $elm$core$Basics$sin(spiralAngle);
-		return {go: acc.go * opacityEffect, gs: acc.gs * scaleEffect, gx: sx - ((pullX * cosA) - (pullY * sinA)), gy: sy - ((pullX * sinA) + (pullY * cosA))};
+		return {opacity: acc.opacity * opacityEffect, posX: sx - ((pullX * cosA) - (pullY * sinA)), posY: sy - ((pullX * sinA) + (pullY * cosA)), scale: acc.scale * scaleEffect};
 	});
 var $author$project$Starfield$viewStar = F2(
 	function (time, star) {
@@ -9002,11 +9376,11 @@ var $author$project$Starfield$viewStar = F2(
 		var grav = A3(
 			$elm$core$List$foldl,
 			$author$project$Starfield$applyGravity(time),
-			{go: 1.0, gs: 1.0, gx: star.x + timeDriftX, gy: star.y + timeDriftY},
+			{opacity: 1.0, posX: star.x + timeDriftX, posY: star.y + timeDriftY, scale: 1.0},
 			$author$project$Starfield$blackHoles);
-		var finalSize = star.size * grav.gs;
+		var finalSize = star.size * grav.scale;
 		var glowRadius = (star.depth > 0.6) ? (finalSize * 3) : 0;
-		var finalOpacity = (star.brightness * twinkle) * grav.go;
+		var finalOpacity = (star.brightness * twinkle) * grav.opacity;
 		return (finalOpacity < 0.01) ? $elm$html$Html$text('') : A2(
 			$elm$html$Html$div,
 			_List_fromArray(
@@ -9015,11 +9389,11 @@ var $author$project$Starfield$viewStar = F2(
 					A2(
 					$elm$html$Html$Attributes$style,
 					'left',
-					$elm$core$String$fromFloat(grav.gx) + '%'),
+					$elm$core$String$fromFloat(grav.posX) + '%'),
 					A2(
 					$elm$html$Html$Attributes$style,
 					'top',
-					$elm$core$String$fromFloat(grav.gy) + '%'),
+					$elm$core$String$fromFloat(grav.posY) + '%'),
 					A2(
 					$elm$html$Html$Attributes$style,
 					'width',
@@ -9037,40 +9411,41 @@ var $author$project$Starfield$viewStar = F2(
 					A2(
 					$elm$html$Html$Attributes$style,
 					'box-shadow',
-					(glowRadius > 0) ? ('0 0 ' + ($elm$core$String$fromFloat(glowRadius) + 'px rgba(168,85,247,0.3)')) : 'none'),
+					(glowRadius > 0) ? ('0 0 ' + ($elm$core$String$fromFloat(glowRadius) + ('px ' + $author$project$Theme$purpleA(0.3)))) : 'none'),
 					A2($elm$html$Html$Attributes$style, 'transform', 'translate(-50%, -50%)')
 				]),
 			_List_Nil);
 	});
-var $author$project$Starfield$viewStarfield = function (time) {
-	return A2(
-		$elm$html$Html$div,
-		_List_fromArray(
-			[
-				A2($elm$html$Html$Attributes$style, 'position', 'fixed'),
-				A2($elm$html$Html$Attributes$style, 'top', '0'),
-				A2($elm$html$Html$Attributes$style, 'left', '0'),
-				A2($elm$html$Html$Attributes$style, 'width', '100vw'),
-				A2($elm$html$Html$Attributes$style, 'height', '100vh'),
-				A2($elm$html$Html$Attributes$style, 'pointer-events', 'none'),
-				A2($elm$html$Html$Attributes$style, 'z-index', '0'),
-				A2($elm$html$Html$Attributes$style, 'overflow', 'hidden')
-			]),
-		_Utils_ap(
-			A2(
-				$elm$core$List$map,
-				$author$project$Starfield$viewBlackHole(time),
-				$author$project$Starfield$blackHoles),
+var $author$project$Starfield$viewStarfield = F2(
+	function (time, seed) {
+		return A2(
+			$elm$html$Html$div,
+			_List_fromArray(
+				[
+					A2($elm$html$Html$Attributes$style, 'position', 'fixed'),
+					A2($elm$html$Html$Attributes$style, 'top', '0'),
+					A2($elm$html$Html$Attributes$style, 'left', '0'),
+					A2($elm$html$Html$Attributes$style, 'width', '100vw'),
+					A2($elm$html$Html$Attributes$style, 'height', '100vh'),
+					A2($elm$html$Html$Attributes$style, 'pointer-events', 'none'),
+					A2($elm$html$Html$Attributes$style, 'z-index', '0'),
+					A2($elm$html$Html$Attributes$style, 'overflow', 'hidden')
+				]),
 			_Utils_ap(
 				A2(
 					$elm$core$List$map,
-					$author$project$Starfield$viewStar(time),
-					$author$project$Starfield$starField),
-				A2(
-					$elm$core$List$map,
-					$author$project$Starfield$viewFerris(time),
-					$author$project$Starfield$ferrisField))));
-};
+					$author$project$Starfield$viewBlackHole(time),
+					$author$project$Starfield$blackHoles),
+				_Utils_ap(
+					A2(
+						$elm$core$List$map,
+						$author$project$Starfield$viewStar(time),
+						$author$project$Starfield$starField),
+					A2(
+						$elm$core$List$map,
+						$author$project$Starfield$viewFerris(time),
+						$author$project$Starfield$generateFerrisField(seed)))));
+	});
 var $author$project$Main$viewPage = function (model) {
 	return A2(
 		$elm$html$Html$div,
@@ -9078,16 +9453,16 @@ var $author$project$Main$viewPage = function (model) {
 			[
 				A2($elm$html$Html$Attributes$style, 'width', '100vw'),
 				A2($elm$html$Html$Attributes$style, 'min-height', '100vh'),
-				A2($elm$html$Html$Attributes$style, 'background', '#0a0a0c'),
+				A2($elm$html$Html$Attributes$style, 'background', $author$project$Theme$bgDark),
 				A2($elm$html$Html$Attributes$style, 'color', '#c4c3c8'),
-				A2($elm$html$Html$Attributes$style, 'font-family', '\'DM Sans\', sans-serif'),
+				A2($elm$html$Html$Attributes$style, 'font-family', $author$project$Theme$sansFont),
 				A2($elm$html$Html$Attributes$style, 'position', 'relative'),
 				$elm$html$Html$Events$onClick(
 				$author$project$Main$FocusPanel($author$project$Main$NoPanel))
 			]),
 		_List_fromArray(
 			[
-				$author$project$Starfield$viewStarfield(model.time),
+				A2($author$project$Starfield$viewStarfield, model.time, model.seed),
 				$author$project$Main$viewCrt,
 				$author$project$Main$viewHero,
 				$author$project$Main$viewMarquee,
@@ -9107,5 +9482,4 @@ var $author$project$Main$view = function (model) {
 };
 var $author$project$Main$main = $elm$browser$Browser$document(
 	{init: $author$project$Main$init, subscriptions: $author$project$Main$subscriptions, update: $author$project$Main$update, view: $author$project$Main$view});
-_Platform_export({'Main':{'init':$author$project$Main$main(
-	$elm$json$Json$Decode$succeed(_Utils_Tuple0))(0)}});}(this));
+_Platform_export({'Main':{'init':$author$project$Main$main($elm$json$Json$Decode$float)(0)}});}(this));

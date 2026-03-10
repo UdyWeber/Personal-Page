@@ -11,9 +11,10 @@ import Json.Decode as Decode
 import Sand exposing (SandState, initSand, viewSandPanel)
 import Set exposing (Set)
 import Starfield exposing (viewStarfield)
+import Theme
 
 
-main : Program () Model Msg
+main : Program Float Model Msg
 main =
     Browser.document
         { init = init
@@ -33,6 +34,12 @@ type FocusedPanel
     | SandPanel
 
 
+type ResetPhase
+    = NotResetting
+    | CrtOff Float
+    | CrtOn Float
+
+
 type alias Model =
     { time : Float
     , keys : Keys
@@ -44,6 +51,8 @@ type alias Model =
     , terminalCurrentLine : String
     , terminalCharIdx : Int
     , terminalTimer : Float
+    , seed : Float
+    , resetPhase : ResetPhase
     }
 
 
@@ -65,7 +74,7 @@ terminalContent =
     , "hacking on side projects in Rust and C++"
     , "$ fortune"
     , "\"the best code is no code at all\" - someone wise"
-    , "$ ping github.com/joaoarthurweber"
+    , "$ ping github.com/udyweber"
     , "PING github.com ... 64 bytes: time=0.42ms"
     , "$ echo $EDITOR"
     , "neovim"
@@ -78,8 +87,8 @@ terminalContent =
     ]
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
+init : Float -> ( Model, Cmd Msg )
+init seed =
     ( { time = 0
       , keys = { left = False, right = False, up = False, space = False }
       , game = initGame
@@ -90,6 +99,8 @@ init _ =
       , terminalCurrentLine = ""
       , terminalCharIdx = 0
       , terminalTimer = 0
+      , seed = seed
+      , resetPhase = NotResetting
       }
     , Cmd.none
     )
@@ -117,10 +128,38 @@ update msg model =
 
                 ts =
                     advanceTerminal model.terminalTimer delta model.terminalLines model.terminalCurrentLine model.terminalCharIdx
+
+                ( newResetPhase, newGame ) =
+                    case model.resetPhase of
+                        CrtOff elapsed ->
+                            let
+                                nextElapsed =
+                                    elapsed + delta
+                            in
+                            if nextElapsed >= 500 then
+                                ( CrtOn 0, initGame )
+
+                            else
+                                ( CrtOff nextElapsed, model.game )
+
+                        CrtOn elapsed ->
+                            let
+                                nextElapsed =
+                                    elapsed + delta
+                            in
+                            if nextElapsed >= 400 then
+                                ( NotResetting, model.game )
+
+                            else
+                                ( CrtOn nextElapsed, model.game )
+
+                        NotResetting ->
+                            ( NotResetting, updateGame delta model.keys model.game )
             in
             ( { model
                 | time = newTime
-                , game = updateGame delta model.keys model.game
+                , game = newGame
+                , resetPhase = newResetPhase
                 , terminalLines = ts.lines
                 , terminalCurrentLine = ts.current
                 , terminalCharIdx = ts.charIdx
@@ -142,14 +181,14 @@ update msg model =
                     newKeys =
                         setKey key False model.keys
 
-                    newGame =
-                        if key == "r" && model.game.gameOver then
-                            initGame
+                    newResetPhase =
+                        if key == "r" && model.game.gameOver && model.resetPhase == NotResetting then
+                            CrtOff 0
 
                         else
-                            model.game
+                            model.resetPhase
                 in
-                ( { model | keys = newKeys, game = newGame }, Cmd.none )
+                ( { model | keys = newKeys, resetPhase = newResetPhase }, Cmd.none )
 
             else
                 ( model, Cmd.none )
@@ -201,7 +240,7 @@ advanceTerminal timer delta lines current charIdx =
                 modBy totalLines lineIdx
         in
         if newTimer >= typingSpeed then
-            case getAt wrappedLineIdx terminalContent of
+            case Theme.getAt wrappedLineIdx terminalContent of
                 Nothing ->
                     { lines = lines, current = current, charIdx = charIdx, timer = 0 }
 
@@ -218,11 +257,6 @@ advanceTerminal timer delta lines current charIdx =
 
         else
             { lines = lines, current = current, charIdx = charIdx, timer = newTimer }
-
-
-getAt : Int -> List a -> Maybe a
-getAt idx list =
-    List.head (List.drop idx list)
 
 
 setKey : String -> Bool -> Keys -> Keys
@@ -288,8 +322,8 @@ injectStyles =
             [ "@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;700&display=swap');"
             , ""
             , "*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }"
-            , "body { overflow-x: hidden; background: #0a0a0c; }"
-            , "::selection { background: rgba(168,85,247,0.35); color: #fff; }"
+            , "body { overflow-x: hidden; background: " ++ Theme.bgDark ++ "; }"
+            , "::selection { background: " ++ Theme.purpleA 0.35 ++ "; color: #fff; }"
             , ""
             , "@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }"
             , "@keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }"
@@ -301,21 +335,26 @@ injectStyles =
             , "@keyframes marquee { from{transform:translateX(100%)} to{transform:translateX(-100%)} }"
             , "@keyframes accrete { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }"
             , "@keyframes termCursor { 0%,100%{opacity:1} 50%{opacity:0} }"
+            , "@keyframes crtOff { 0%{transform:scaleY(1);opacity:1;filter:brightness(1)} 15%{transform:scaleY(1);opacity:1;filter:brightness(2.5)} 40%{transform:scaleY(0.005);opacity:1;filter:brightness(1)} 100%{transform:scaleY(0.005);opacity:0;filter:brightness(1)} }"
+            , "@keyframes crtOn { 0%{transform:scaleY(0.005);opacity:0} 50%{transform:scaleY(1.02);opacity:1} 100%{transform:scaleY(1);opacity:1} }"
+            , ".crt-off { animation: crtOff 0.5s ease forwards; }"
+            , ".crt-on { animation: crtOn 0.4s ease forwards; }"
             , ""
             , ".card-link { transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease; }"
-            , ".card-link:hover { border-color: rgba(168,85,247,0.5) !important; box-shadow: 0 0 30px rgba(168,85,247,0.12), inset 0 1px 0 rgba(168,85,247,0.1) !important; transform: translateY(-4px) !important; }"
-            , ".card-link:hover .card-idx { color: rgba(168,85,247,0.8) !important; }"
+            , ".card-link:hover { border-color: " ++ Theme.purpleA 0.5 ++ " !important; box-shadow: 0 0 30px " ++ Theme.purpleA 0.12 ++ ", inset 0 1px 0 " ++ Theme.purpleA 0.1 ++ " !important; transform: translateY(-4px) !important; }"
+            , ".card-link:hover .card-idx { color: " ++ Theme.purpleA 0.8 ++ " !important; }"
             , ".card-link:hover .card-arrow { opacity: 1 !important; transform: translateX(4px) !important; }"
             , ".card-link:hover .card-scan { opacity: 1 !important; animation: scanline 1.5s linear infinite !important; }"
             , ""
-            , ".footer-link { color: rgba(168,85,247,0.6); text-decoration: none; transition: color 0.2s; font-family: 'Space Mono', monospace; font-size: 12px; letter-spacing: 0.05em; }"
-            , ".footer-link:hover { color: rgba(168,85,247,0.8); }"
+            , ".footer-link { color: " ++ Theme.purpleA 0.6 ++ "; text-decoration: none; transition: color 0.2s; font-family: " ++ Theme.monoFont ++ "; font-size: 12px; letter-spacing: 0.05em; }"
+            , ".footer-link:hover { color: " ++ Theme.purpleA 0.8 ++ "; }"
             , ""
-            , ".social-link { color: rgba(168,85,247,0.55); text-decoration: none; transition: color 0.3s ease, text-shadow 0.3s ease; }"
-            , ".social-link:hover { color: rgba(168,85,247,0.9); text-shadow: 0 0 12px rgba(168,85,247,0.3); }"
+            , ".social-link { color: " ++ Theme.purpleA 0.55 ++ "; text-decoration: none; transition: color 0.3s ease, text-shadow 0.3s ease; }"
+            , ".social-link:hover { color: " ++ Theme.purpleA 0.9 ++ "; text-shadow: 0 0 12px " ++ Theme.purpleA 0.3 ++ "; }"
             , ""
             , "@media (max-width: 900px) {"
             , "  .section-grid { grid-template-columns: 1fr !important; }"
+            , "  .section-grid .span-full { grid-column: 1 !important; }"
             , "}"
             , ""
             , ".ase-checkerboard {"
@@ -324,8 +363,8 @@ injectStyles =
             , "  background-position: 0 0, 0 8px, 8px -8px, -8px 0px;"
             , "  background-color: #252540;"
             , "}"
-            , ".ase-tool { width: 18px; height: 18px; border: 1px solid #3a3a5c; background: #2a2a48; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #8888aa; cursor: default; }"
-            , ".ase-tool:hover { background: #3a3a5c; color: #bbbbdd; }"
+            , ".ase-tool { width: 18px; height: 18px; border: 1px solid " ++ aseBorder ++ "; background: #2a2a48; display: flex; align-items: center; justify-content: center; font-size: 9px; color: " ++ aseText ++ "; cursor: default; }"
+            , ".ase-tool:hover { background: " ++ aseBorder ++ "; color: " ++ aseTextBright ++ "; }"
             , ".ase-color-swatch { width: 14px; height: 14px; border: 1px solid #4a4a6c; }"
             , ""
             ])
@@ -337,13 +376,13 @@ viewPage model =
     div
         [ style "width" "100vw"
         , style "min-height" "100vh"
-        , style "background" "#0a0a0c"
+        , style "background" Theme.bgDark
         , style "color" "#c4c3c8"
-        , style "font-family" "'DM Sans', sans-serif"
+        , style "font-family" Theme.sansFont
         , style "position" "relative"
         , onClick (FocusPanel NoPanel)
         ]
-        [ viewStarfield model.time
+        [ viewStarfield model.time model.seed
         , viewCrt
         , viewHero
         , viewMarquee
@@ -372,12 +411,16 @@ viewCrt =
             , style "left" "0"
             , style "width" "100%"
             , style "height" "100%"
-            , style "background" "radial-gradient(ellipse at center, transparent 50%, rgba(10,10,12,0.8) 100%)"
+            , style "background" ("radial-gradient(ellipse at center, transparent 50%, rgba(10,10,12,0.8) 100%)")
             , style "pointer-events" "none"
             , style "z-index" "9998"
             ]
             []
         ]
+
+
+
+-- HERO
 
 
 viewHero : Html Msg
@@ -399,106 +442,131 @@ viewHero =
             , style "text-align" "center"
             , style "animation" "fadeUp 1.2s cubic-bezier(0.16,1,0.3,1) forwards"
             ]
-            [ div
-                [ style "font-family" "'Space Mono', monospace"
-                , style "font-size" "13px"
-                , style "color" "rgba(168,85,247,0.6)"
-                , style "letter-spacing" "0.15em"
-                , style "margin-bottom" "32px"
-                , style "animation" "fadeIn 1s ease 0.3s both"
-                ]
-                [ text "visitor@jaw ~ $ whoami" ]
-            , div
-                [ style "position" "relative"
-                , style "display" "inline-block"
-                ]
-                [ div
-                    [ style "font-family" "'Space Mono', monospace"
-                    , style "font-size" "clamp(80px, 16vw, 220px)"
-                    , style "font-weight" "700"
-                    , style "color" "rgba(168,85,247,0.08)"
-                    , style "letter-spacing" "0.3em"
-                    , style "line-height" "0.9"
-                    , style "position" "absolute"
-                    , style "top" "4px"
-                    , style "left" "4px"
-                    , style "user-select" "none"
-                    , style "animation" "glitchSlice 8s steps(1) infinite 3s"
-                    ]
-                    [ text "JAW" ]
-                , div
-                    [ style "font-family" "'Space Mono', monospace"
-                    , style "font-size" "clamp(80px, 16vw, 220px)"
-                    , style "font-weight" "700"
-                    , style "color" "#eeedf0"
-                    , style "letter-spacing" "0.3em"
-                    , style "line-height" "0.9"
-                    , style "position" "relative"
-                    , style "user-select" "none"
-                    , style "text-shadow" "0 0 80px rgba(168,85,247,0.2), 0 0 160px rgba(168,85,247,0.05)"
-                    , style "animation" "flicker 10s ease infinite 2s"
-                    ]
-                    [ text "JAW" ]
-                ]
-            , div
-                [ style "display" "flex"
-                , style "align-items" "center"
-                , style "justify-content" "center"
-                , style "gap" "8px"
-                , style "margin-top" "28px"
-                , style "animation" "fadeIn 1s ease 0.8s both"
-                ]
-                [ div [ style "width" "40px", style "height" "1px", style "background" "rgba(168,85,247,0.2)" ] []
-                , div
-                    [ style "font-family" "'Space Mono', monospace"
-                    , style "font-size" "14px"
-                    , style "color" "rgba(168,85,247,0.7)"
-                    , style "letter-spacing" "0.3em"
-                    ]
-                    [ text "JOAO ARTHUR WEBER" ]
-                , div
-                    [ style "width" "8px"
-                    , style "height" "16px"
-                    , style "background" "rgba(168,85,247,0.6)"
-                    , style "animation" "blink 1s steps(1) infinite"
-                    ]
-                    []
-                , div [ style "width" "40px", style "height" "1px", style "background" "rgba(168,85,247,0.2)" ] []
-                ]
-            , div
-                [ style "max-width" "540px"
-                , style "margin" "24px auto 0"
-                , style "font-size" "15px"
-                , style "color" "rgba(196,195,200,0.8)"
-                , style "line-height" "1.7"
-                , style "text-align" "center"
-                , style "letter-spacing" "0.01em"
-                , style "animation" "fadeIn 1s ease 1.0s both"
-                ]
-                [ text "Software developer, enamoured with learning programming languages and weird tech, with an estrange appeal for distributed systems and Rust — always enhancing my craft and looking for problems to solve. When I'm not buried in code (on neovim btw), you'll find me drawing pixel art (with far more enthusiasm than skill), singing my heart out to whatever song is stuck in my head, or diving into some obscure technology rabbit hole just because it looked interesting. I believe the best way to learn is to build things that probably shouldn't exist." ]
-            , div
-                [ style "display" "flex"
-                , style "align-items" "center"
-                , style "justify-content" "center"
-                , style "gap" "24px"
-                , style "margin-top" "24px"
-                , style "animation" "fadeIn 1s ease 1.1s both"
-                ]
-                [ viewSocialLink "github" "https://github.com/joaoarthurweber"
-                , viewSocialLink "linkedin" "https://linkedin.com/in/joaoarthurweber"
-                , viewSocialLink "email" "mailto:joaoarthurweber@gmail.com"
-                ]
-            , div
-                [ style "margin-top" "48px"
-                , style "font-family" "'Space Mono', monospace"
-                , style "font-size" "12px"
-                , style "color" "rgba(168,85,247,0.4)"
-                , style "letter-spacing" "0.2em"
-                , style "animation" "fadeIn 1s ease 1.4s both, drift 3s ease infinite 2s"
-                ]
-                [ text "[ scroll ]" ]
+            [ viewHeroPrompt
+            , viewHeroTitle
+            , viewHeroBio
+            , viewHeroSocials
+            , viewHeroScrollHint
             ]
         ]
+
+
+viewHeroPrompt : Html Msg
+viewHeroPrompt =
+    div
+        [ style "font-family" Theme.monoFont
+        , style "font-size" "13px"
+        , style "color" (Theme.purpleA 0.6)
+        , style "letter-spacing" "0.15em"
+        , style "margin-bottom" "32px"
+        , style "animation" "fadeIn 1s ease 0.3s both"
+        ]
+        [ text "visitor@jaw ~ $ whoami" ]
+
+
+viewHeroTitle : Html Msg
+viewHeroTitle =
+    div
+        [ style "position" "relative"
+        , style "display" "inline-block"
+        ]
+        [ div
+            [ style "font-family" Theme.monoFont
+            , style "font-size" "clamp(80px, 16vw, 220px)"
+            , style "font-weight" "700"
+            , style "color" (Theme.purpleA 0.08)
+            , style "letter-spacing" "0.3em"
+            , style "line-height" "0.9"
+            , style "position" "absolute"
+            , style "top" "4px"
+            , style "left" "4px"
+            , style "user-select" "none"
+            , style "animation" "glitchSlice 8s steps(1) infinite 3s"
+            ]
+            [ text "JAW" ]
+        , div
+            [ style "font-family" Theme.monoFont
+            , style "font-size" "clamp(80px, 16vw, 220px)"
+            , style "font-weight" "700"
+            , style "color" Theme.textLight
+            , style "letter-spacing" "0.3em"
+            , style "line-height" "0.9"
+            , style "position" "relative"
+            , style "user-select" "none"
+            , style "text-shadow" ("0 0 80px " ++ Theme.purpleA 0.2 ++ ", 0 0 160px " ++ Theme.purpleA 0.05)
+            , style "animation" "flicker 10s ease infinite 2s"
+            ]
+            [ text "JAW" ]
+        , div
+            [ style "display" "flex"
+            , style "align-items" "center"
+            , style "justify-content" "center"
+            , style "gap" "8px"
+            , style "margin-top" "28px"
+            , style "animation" "fadeIn 1s ease 0.8s both"
+            ]
+            [ div [ style "width" "40px", style "height" "1px", style "background" (Theme.purpleA 0.2) ] []
+            , div
+                [ style "font-family" Theme.monoFont
+                , style "font-size" "14px"
+                , style "color" (Theme.purpleA 0.7)
+                , style "letter-spacing" "0.3em"
+                ]
+                [ text "JOAO ARTHUR WEBER" ]
+            , div
+                [ style "width" "8px"
+                , style "height" "16px"
+                , style "background" (Theme.purpleA 0.6)
+                , style "animation" "blink 1s steps(1) infinite"
+                ]
+                []
+            , div [ style "width" "40px", style "height" "1px", style "background" (Theme.purpleA 0.2) ] []
+            ]
+        ]
+
+
+viewHeroBio : Html Msg
+viewHeroBio =
+    div
+        [ style "max-width" "540px"
+        , style "margin" "24px auto 0"
+        , style "font-size" "15px"
+        , style "color" "rgba(196,195,200,0.8)"
+        , style "line-height" "1.7"
+        , style "text-align" "center"
+        , style "letter-spacing" "0.01em"
+        , style "animation" "fadeIn 1s ease 1.0s both"
+        ]
+        [ text "Software developer, enamoured with learning programming languages and weird tech, with an estrange appeal for distributed systems and Rust — always enhancing my craft and looking for problems to solve. When I'm not buried in code (on neovim btw), you'll find me drawing pixel art (with far more enthusiasm than skill), singing my heart out to whatever song is stuck in my head, or diving into some obscure technology rabbit hole just because it looked interesting. I believe the best way to learn is to build things that probably shouldn't exist." ]
+
+
+viewHeroSocials : Html Msg
+viewHeroSocials =
+    div
+        [ style "display" "flex"
+        , style "align-items" "center"
+        , style "justify-content" "center"
+        , style "gap" "24px"
+        , style "margin-top" "24px"
+        , style "animation" "fadeIn 1s ease 1.1s both"
+        ]
+        [ viewSocialLink "github" Theme.githubUrl
+        , viewSocialLink "linkedin" Theme.linkedinUrl
+        , viewSocialLink "email" Theme.emailUrl
+        ]
+
+
+viewHeroScrollHint : Html Msg
+viewHeroScrollHint =
+    div
+        [ style "margin-top" "48px"
+        , style "font-family" Theme.monoFont
+        , style "font-size" "12px"
+        , style "color" (Theme.purpleA 0.4)
+        , style "letter-spacing" "0.2em"
+        , style "animation" "fadeIn 1s ease 1.4s both, drift 3s ease infinite 2s"
+        ]
+        [ text "[ scroll ]" ]
 
 
 viewSocialLink : String -> String -> Html Msg
@@ -507,7 +575,7 @@ viewSocialLink label url =
         [ class "social-link"
         , href url
         , target "_blank"
-        , style "font-family" "'Space Mono', monospace"
+        , style "font-family" Theme.monoFont
         , style "font-size" "12px"
         , style "letter-spacing" "0.15em"
         , style "text-transform" "uppercase"
@@ -524,7 +592,7 @@ viewGridFloor =
         , style "width" "120%"
         , style "height" "45vh"
         , style "background-image"
-            "linear-gradient(rgba(168,85,247,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(168,85,247,0.04) 1px, transparent 1px)"
+            ("linear-gradient(" ++ Theme.purpleA 0.04 ++ " 1px, transparent 1px), linear-gradient(90deg, " ++ Theme.purpleA 0.04 ++ " 1px, transparent 1px)")
         , style "background-size" "70px 70px"
         , style "transform" "perspective(400px) rotateX(55deg)"
         , style "transform-origin" "center bottom"
@@ -534,29 +602,37 @@ viewGridFloor =
         []
 
 
+
+-- MARQUEE
+
+
 viewMarquee : Html Msg
 viewMarquee =
     div
         [ style "position" "relative"
         , style "overflow" "hidden"
-        , style "border-top" "1px solid rgba(168,85,247,0.08)"
-        , style "border-bottom" "1px solid rgba(168,85,247,0.08)"
+        , style "border-top" ("1px solid " ++ Theme.purpleA 0.08)
+        , style "border-bottom" ("1px solid " ++ Theme.purpleA 0.08)
         , style "padding" "12px 0"
-        , style "background" "rgba(168,85,247,0.015)"
+        , style "background" (Theme.purpleA 0.015)
         , style "z-index" "1"
         ]
         [ div
             [ style "display" "inline-block"
             , style "white-space" "nowrap"
             , style "animation" "marquee 30s linear infinite"
-            , style "font-family" "'Space Mono', monospace"
+            , style "font-family" Theme.monoFont
             , style "font-size" "12px"
             , style "letter-spacing" "0.2em"
-            , style "color" "rgba(168,85,247,0.7)"
+            , style "color" (Theme.purpleA 0.7)
             , style "text-transform" "uppercase"
             ]
             [ text "python  //  sql  //  rust  //  java  //  scala  //  golang  //  c++  //  c  //  elixir  //  lua  //  bash  //  docker  //  neovim  //  git  //  unix  //  spark  //  datafusion  //  python  //  sql  //  rust  //  java" ]
         ]
+
+
+
+-- MAIN CONTENT
 
 
 viewMainContent : Model -> Html Msg
@@ -566,7 +642,7 @@ viewMainContent model =
             List.indexedMap (viewCrystalCard ToggleCard model.expandedCards) crystalData
 
         getCard idx =
-            case List.head (List.drop idx cards) of
+            case Theme.getAt idx cards of
                 Just card ->
                     card
 
@@ -583,9 +659,9 @@ viewMainContent model =
         [ div
             [ style "margin-bottom" "56px" ]
             [ div
-                [ style "font-family" "'Space Mono', monospace"
+                [ style "font-family" Theme.monoFont
                 , style "font-size" "12px"
-                , style "color" "rgba(168,85,247,0.55)"
+                , style "color" (Theme.purpleA 0.55)
                 , style "letter-spacing" "0.15em"
                 , style "margin-bottom" "12px"
                 ]
@@ -596,24 +672,24 @@ viewMainContent model =
                 , style "gap" "16px"
                 ]
                 [ div
-                    [ style "font-family" "'Space Mono', monospace"
+                    [ style "font-family" Theme.monoFont
                     , style "font-size" "clamp(24px, 3.5vw, 36px)"
                     , style "font-weight" "700"
-                    , style "color" "#eeedf0"
+                    , style "color" Theme.textLight
                     , style "letter-spacing" "0.1em"
                     ]
                     [ text "INDEX" ]
-                , div [ style "flex" "1", style "height" "1px", style "background" "linear-gradient(90deg, rgba(168,85,247,0.15), transparent)" ] []
+                , div [ style "flex" "1", style "height" "1px", style "background" ("linear-gradient(90deg, " ++ Theme.purpleA 0.15 ++ ", transparent)") ] []
                 , div
-                    [ style "font-family" "'Space Mono', monospace"
+                    [ style "font-family" Theme.monoFont
                     , style "font-size" "12px"
-                    , style "color" "rgba(168,85,247,0.45)"
+                    , style "color" (Theme.purpleA 0.45)
                     ]
                     [ text (String.fromInt (List.length crystalData) ++ " entries") ]
                 ]
             ]
 
-        -- Section: Sandbox (first experience)
+        -- Section: Sandbox
         , viewSectionDivider "SANDBOX"
         , div
             [ style "margin-bottom" "48px"
@@ -621,12 +697,12 @@ viewMainContent model =
             [ viewSandPanel model.sand
             ]
 
-        -- Section: Experience
+        -- Section: Experience (L-wrap: 3 cards left + Asteroids right, CIDS spanning full width below)
         , viewSectionDivider "EXPERIENCE"
         , div
             [ class "section-grid"
             , style "display" "grid"
-            , style "grid-template-columns" "1fr 420px"
+            , style "grid-template-columns" "1fr 460px"
             , style "gap" "20px"
             , style "align-items" "start"
             , style "margin-bottom" "48px"
@@ -638,20 +714,19 @@ viewMainContent model =
                 ]
             , div
                 [ stopPropagationOn "click" (Decode.succeed ( FocusPanel AsteroidsPanel, True ))
+                , Html.Attributes.id "asteroids-panel"
                 ]
-                [ viewAsteroidsGame model.game
+                [ viewGameWrapper model
+                ]
+            , div
+                [ class "span-full"
+                , style "grid-column" "1 / -1"
+                ]
+                [ getCard 3
                 ]
             ]
 
-        -- Section: Education (full width)
-        , viewSectionDivider "EDUCATION"
-        , div
-            [ style "margin-bottom" "48px"
-            ]
-            [ getCard 3
-            ]
-
-        -- Section: Projects
+        -- Section: Projects (L-wrap: 2 project cards left + Terminal right, Education spanning full width below)
         , viewSectionDivider "PROJECTS"
         , div
             [ class "section-grid"
@@ -662,10 +737,16 @@ viewMainContent model =
             , style "margin-bottom" "48px"
             ]
             [ div [ style "display" "flex", style "flex-direction" "column", style "gap" "20px" ]
-                [ getCard 4
-                , getCard 5
+                [ getCard 5
+                , getCard 6
                 ]
             , viewTerminal model
+            , div
+                [ class "span-full"
+                , style "grid-column" "1 / -1"
+                ]
+                [ getCard 4
+                ]
             ]
 
         -- Gallery
@@ -692,9 +773,9 @@ viewSectionDivider label =
         , style "margin-bottom" "24px"
         ]
         [ div
-            [ style "font-family" "'Space Mono', monospace"
+            [ style "font-family" Theme.monoFont
             , style "font-size" "11px"
-            , style "color" "rgba(168,85,247,0.5)"
+            , style "color" (Theme.purpleA 0.5)
             , style "letter-spacing" "0.15em"
             , style "white-space" "nowrap"
             ]
@@ -702,232 +783,331 @@ viewSectionDivider label =
         , div
             [ style "flex" "1"
             , style "height" "1px"
-            , style "background" "linear-gradient(90deg, rgba(168,85,247,0.1), transparent)"
+            , style "background" ("linear-gradient(90deg, " ++ Theme.purpleA 0.1 ++ ", transparent)")
             ]
             []
         ]
 
 
+
+-- ASEPRITE PANEL
+
+
+aseBg : String
+aseBg =
+    "#232338"
+
+
+aseBorder : String
+aseBorder =
+    "#3a3a5c"
+
+
+aseText : String
+aseText =
+    "#8888aa"
+
+
+aseTextBright : String
+aseTextBright =
+    "#bbbbdd"
+
+
+aseHighlight : String
+aseHighlight =
+    "#5c5c8a"
+
+
+aseMenuBg : String
+aseMenuBg =
+    "#282845"
+
+
+aseToolbarBg : String
+aseToolbarBg =
+    "#262642"
+
+
+asePaletteBg : String
+asePaletteBg =
+    "#1a1a30"
+
+
+aseTitleBg : String
+aseTitleBg =
+    "#1e1e32"
+
+
 viewAsepritePanel : String -> String -> Int -> Int -> Int -> Html Msg
 viewAsepritePanel filename imagePath width height selectedFrame =
-    let
-        aseBg =
-            "#232338"
-
-        aseBorder =
-            "#3a3a5c"
-
-        aseText =
-            "#8888aa"
-
-        aseTextBright =
-            "#bbbbdd"
-
-        aseHighlight =
-            "#5c5c8a"
-    in
     div
         [ style "border" ("1px solid " ++ aseBorder)
         , style "background" aseBg
         , style "overflow" "hidden"
         , style "animation" "fadeUp 0.6s ease 0.4s both"
         ]
-        [ -- Title bar
-          div
+        [ viewAseTitleBar filename
+        , viewAseMenuBar
+        , div
+            [ style "display" "flex" ]
+            [ viewAseToolbar
+            , viewAseCanvas imagePath
+            ]
+        , viewAseTimeline width height selectedFrame
+        , viewAsePalette
+        ]
+
+
+viewAseTitleBar : String -> Html Msg
+viewAseTitleBar filename =
+    div
+        [ style "display" "flex"
+        , style "align-items" "center"
+        , style "justify-content" "space-between"
+        , style "padding" "4px 8px"
+        , style "background" aseTitleBg
+        , style "border-bottom" ("1px solid " ++ aseBorder)
+        ]
+        [ div
             [ style "display" "flex"
             , style "align-items" "center"
-            , style "justify-content" "space-between"
-            , style "padding" "4px 8px"
-            , style "background" "#1e1e32"
-            , style "border-bottom" ("1px solid " ++ aseBorder)
+            , style "gap" "8px"
             ]
             [ div
-                [ style "display" "flex"
-                , style "align-items" "center"
-                , style "gap" "8px"
+                [ style "font-family" Theme.monoFont
+                , style "font-size" "9px"
+                , style "color" aseTextBright
+                , style "letter-spacing" "0.05em"
+                ]
+                [ text ("Aseprite - " ++ filename) ]
+            ]
+        , div
+            [ style "display" "flex"
+            , style "gap" "4px"
+            ]
+            [ aseWindowButton "_"
+            , aseWindowButton "□"
+            , aseWindowButton "x"
+            ]
+        ]
+
+
+aseWindowButton : String -> Html Msg
+aseWindowButton label =
+    div
+        [ style "width" "10px"
+        , style "height" "10px"
+        , style "border" ("1px solid " ++ aseBorder)
+        , style "font-size" "7px"
+        , style "color" aseText
+        , style "display" "flex"
+        , style "align-items" "center"
+        , style "justify-content" "center"
+        ]
+        [ text label ]
+
+
+viewAseMenuBar : Html Msg
+viewAseMenuBar =
+    div
+        [ style "display" "flex"
+        , style "gap" "0"
+        , style "padding" "2px 4px"
+        , style "background" aseMenuBg
+        , style "border-bottom" ("1px solid " ++ aseBorder)
+        ]
+        (List.map
+            (\item ->
+                div
+                    [ style "font-family" Theme.monoFont
+                    , style "font-size" "9px"
+                    , style "color" aseText
+                    , style "padding" "2px 8px"
+                    ]
+                    [ text item ]
+            )
+            [ "File", "Edit", "Sprite", "Layer", "Frame", "Select", "View" ]
+        )
+
+
+viewAseToolbar : Html Msg
+viewAseToolbar =
+    div
+        [ style "display" "flex"
+        , style "flex-direction" "column"
+        , style "gap" "1px"
+        , style "padding" "4px 3px"
+        , style "background" aseToolbarBg
+        , style "border-right" ("1px solid " ++ aseBorder)
+        ]
+        (List.map
+            (\icon ->
+                div [ class "ase-tool" ] [ text icon ]
+            )
+            [ "✎", "◉", "▬", "◇", "⬚", "✦", "◫", "⊘", "↔", "▲" ]
+        )
+
+
+viewAseCanvas : String -> Html Msg
+viewAseCanvas imagePath =
+    div
+        [ style "flex" "1"
+        , style "display" "flex"
+        , style "align-items" "center"
+        , style "justify-content" "center"
+        , style "min-height" "300px"
+        , class "ase-checkerboard"
+        , style "position" "relative"
+        ]
+        [ Html.img
+            [ src ("assets/" ++ imagePath)
+            , style "image-rendering" "pixelated"
+            , style "image-rendering" "crisp-edges"
+            , style "max-width" "90%"
+            , style "max-height" "280px"
+            , style "object-fit" "contain"
+            ]
+            []
+        ]
+
+
+viewAseTimeline : Int -> Int -> Int -> Html Msg
+viewAseTimeline width height selectedFrame =
+    div
+        [ style "display" "flex"
+        , style "align-items" "center"
+        , style "justify-content" "space-between"
+        , style "padding" "3px 8px"
+        , style "background" aseTitleBg
+        , style "border-top" ("1px solid " ++ aseBorder)
+        ]
+        [ div
+            [ style "display" "flex"
+            , style "align-items" "center"
+            , style "gap" "12px"
+            ]
+            [ div
+                [ style "position" "relative"
+                , style "width" "24px"
+                , style "height" "24px"
                 ]
                 [ div
-                    [ style "font-family" "'Space Mono', monospace"
-                    , style "font-size" "9px"
-                    , style "color" aseTextBright
-                    , style "letter-spacing" "0.05em"
+                    [ class "ase-color-swatch"
+                    , style "position" "absolute"
+                    , style "bottom" "0"
+                    , style "right" "0"
+                    , style "background" Theme.textLight
                     ]
-                    [ text ("Aseprite - " ++ filename) ]
-                ]
-            , div
-                [ style "display" "flex"
-                , style "gap" "4px"
-                ]
-                [ div [ style "width" "10px", style "height" "10px", style "border" ("1px solid " ++ aseBorder), style "font-size" "7px", style "color" aseText, style "display" "flex", style "align-items" "center", style "justify-content" "center" ] [ text "_" ]
-                , div [ style "width" "10px", style "height" "10px", style "border" ("1px solid " ++ aseBorder), style "font-size" "7px", style "color" aseText, style "display" "flex", style "align-items" "center", style "justify-content" "center" ] [ text "□" ]
-                , div [ style "width" "10px", style "height" "10px", style "border" ("1px solid " ++ aseBorder), style "font-size" "7px", style "color" aseText, style "display" "flex", style "align-items" "center", style "justify-content" "center" ] [ text "x" ]
-                ]
-            ]
-        , -- Menu bar
-          div
-            [ style "display" "flex"
-            , style "gap" "0"
-            , style "padding" "2px 4px"
-            , style "background" "#282845"
-            , style "border-bottom" ("1px solid " ++ aseBorder)
-            ]
-            (List.map
-                (\item ->
-                    div
-                        [ style "font-family" "'Space Mono', monospace"
-                        , style "font-size" "9px"
-                        , style "color" aseText
-                        , style "padding" "2px 8px"
-                        ]
-                        [ text item ]
-                )
-                [ "File", "Edit", "Sprite", "Layer", "Frame", "Select", "View" ]
-            )
-        , -- Main content area with toolbar + canvas
-          div
-            [ style "display" "flex" ]
-            [ -- Left toolbar
-              div
-                [ style "display" "flex"
-                , style "flex-direction" "column"
-                , style "gap" "1px"
-                , style "padding" "4px 3px"
-                , style "background" "#262642"
-                , style "border-right" ("1px solid " ++ aseBorder)
-                ]
-                (List.map
-                    (\icon ->
-                        div [ class "ase-tool" ] [ text icon ]
-                    )
-                    [ "✎", "◉", "▬", "◇", "⬚", "✦", "◫", "⊘", "↔", "▲" ]
-                )
-            , -- Canvas area
-              div
-                [ style "flex" "1"
-                , style "display" "flex"
-                , style "align-items" "center"
-                , style "justify-content" "center"
-                , style "min-height" "300px"
-                , class "ase-checkerboard"
-                , style "position" "relative"
-                ]
-                [ Html.img
-                    [ src ("assets/" ++ imagePath)
-                    , style "image-rendering" "pixelated"
-                    , style "image-rendering" "crisp-edges"
-                    , style "max-width" "90%"
-                    , style "max-height" "280px"
-                    , style "object-fit" "contain"
+                    []
+                , div
+                    [ class "ase-color-swatch"
+                    , style "position" "absolute"
+                    , style "top" "0"
+                    , style "left" "0"
+                    , style "background" Theme.bgDark
                     ]
                     []
                 ]
-            ]
-        , -- Bottom status / timeline bar
-          div
-            [ style "display" "flex"
-            , style "align-items" "center"
-            , style "justify-content" "space-between"
-            , style "padding" "3px 8px"
-            , style "background" "#1e1e32"
-            , style "border-top" ("1px solid " ++ aseBorder)
-            ]
-            [ div
-                [ style "display" "flex"
-                , style "align-items" "center"
-                , style "gap" "12px"
-                ]
-                [ -- FG/BG color swatches
-                  div
-                    [ style "position" "relative"
-                    , style "width" "24px"
-                    , style "height" "24px"
-                    ]
-                    [ div
-                        [ class "ase-color-swatch"
-                        , style "position" "absolute"
-                        , style "bottom" "0"
-                        , style "right" "0"
-                        , style "background" "#eeedf0"
-                        ]
-                        []
-                    , div
-                        [ class "ase-color-swatch"
-                        , style "position" "absolute"
-                        , style "top" "0"
-                        , style "left" "0"
-                        , style "background" "#0a0a0c"
-                        ]
-                        []
-                    ]
-                , div
-                    [ style "font-family" "'Space Mono', monospace"
-                    , style "font-size" "8px"
-                    , style "color" aseText
-                    ]
-                    [ text (String.fromInt width ++ "x" ++ String.fromInt height ++ "px") ]
-                ]
-            , -- Timeline frames
-              div
-                [ style "display" "flex"
-                , style "align-items" "center"
-                , style "gap" "2px"
-                ]
-                (List.indexedMap
-                    (\i _ ->
-                        div
-                            [ style "width" "20px"
-                            , style "height" "16px"
-                            , style "border" ("1px solid " ++ (if i == selectedFrame then aseHighlight else aseBorder))
-                            , style "background" (if i == selectedFrame then "#3a3a5c" else "#222240")
-                            , style "font-family" "'Space Mono', monospace"
-                            , style "font-size" "7px"
-                            , style "color" (if i == selectedFrame then aseTextBright else aseText)
-                            , style "display" "flex"
-                            , style "align-items" "center"
-                            , style "justify-content" "center"
-                            ]
-                            [ text (String.fromInt (i + 1)) ]
-                    )
-                    (List.range 0 4)
-                )
             , div
-                [ style "font-family" "'Space Mono', monospace"
+                [ style "font-family" Theme.monoFont
                 , style "font-size" "8px"
                 , style "color" aseText
                 ]
-                [ text ("Frame " ++ String.fromInt (selectedFrame + 1) ++ "/5") ]
+                [ text (String.fromInt width ++ "x" ++ String.fromInt height ++ "px") ]
             ]
-        , -- Color palette bar
-          div
+        , div
             [ style "display" "flex"
             , style "align-items" "center"
-            , style "padding" "4px 6px"
             , style "gap" "2px"
-            , style "background" "#1a1a30"
-            , style "border-top" ("1px solid " ++ aseBorder)
-            , style "flex-wrap" "wrap"
             ]
-            (List.map
-                (\color ->
+            (List.indexedMap
+                (\i _ ->
                     div
-                        [ style "width" "10px"
-                        , style "height" "10px"
-                        , style "background" color
-                        , style "border" "1px solid rgba(255,255,255,0.06)"
+                        [ style "width" "20px"
+                        , style "height" "16px"
+                        , style "border" ("1px solid " ++ (if i == selectedFrame then aseHighlight else aseBorder))
+                        , style "background" (if i == selectedFrame then aseBorder else "#222240")
+                        , style "font-family" Theme.monoFont
+                        , style "font-size" "7px"
+                        , style "color" (if i == selectedFrame then aseTextBright else aseText)
+                        , style "display" "flex"
+                        , style "align-items" "center"
+                        , style "justify-content" "center"
                         ]
-                        []
+                        [ text (String.fromInt (i + 1)) ]
                 )
-                [ "#000000", "#1a1a2e", "#2a2a48", "#3a3a5c"
-                , "#5c5c8a", "#8888aa", "#bbbbdd", "#eeedf0"
-                , "#a855f7", "#7c3aed", "#6d28d9", "#5b21b6"
-                , "#d946ef", "#c026d3", "#a21caf", "#86198f"
-                , "#3b82f6", "#2563eb", "#1d4ed8", "#1e40af"
-                , "#ef4444", "#dc2626", "#b91c1c", "#991b1b"
-                , "#f59e0b", "#d97706", "#b45309", "#92400e"
-                , "#22c55e", "#16a34a", "#15803d", "#166534"
-                ]
+                (List.range 0 4)
             )
+        , div
+            [ style "font-family" Theme.monoFont
+            , style "font-size" "8px"
+            , style "color" aseText
+            ]
+            [ text ("Frame " ++ String.fromInt (selectedFrame + 1) ++ "/5") ]
         ]
+
+
+viewAsePalette : Html Msg
+viewAsePalette =
+    div
+        [ style "display" "flex"
+        , style "align-items" "center"
+        , style "padding" "4px 6px"
+        , style "gap" "2px"
+        , style "background" asePaletteBg
+        , style "border-top" ("1px solid " ++ aseBorder)
+        , style "flex-wrap" "wrap"
+        ]
+        (List.map
+            (\color ->
+                div
+                    [ style "width" "10px"
+                    , style "height" "10px"
+                    , style "background" color
+                    , style "border" "1px solid rgba(255,255,255,0.06)"
+                    ]
+                    []
+            )
+            [ "#000000", "#1a1a2e", "#2a2a48", "#3a3a5c"
+            , "#5c5c8a", "#8888aa", "#bbbbdd", "#eeedf0"
+            , "#a855f7", "#7c3aed", "#6d28d9", "#5b21b6"
+            , "#d946ef", "#c026d3", "#a21caf", "#86198f"
+            , "#3b82f6", "#2563eb", "#1d4ed8", "#1e40af"
+            , "#ef4444", "#dc2626", "#b91c1c", "#991b1b"
+            , "#f59e0b", "#d97706", "#b45309", "#92400e"
+            , "#22c55e", "#16a34a", "#15803d", "#166534"
+            ]
+        )
+
+
+
+-- GAME WRAPPER (CRT animation)
+
+
+viewGameWrapper : Model -> Html Msg
+viewGameWrapper model =
+    let
+        crtClass =
+            case model.resetPhase of
+                NotResetting ->
+                    ""
+
+                CrtOff _ ->
+                    "crt-off"
+
+                CrtOn _ ->
+                    "crt-on"
+    in
+    div
+        [ class crtClass
+        , style "transform-origin" "center center"
+        ]
+        [ viewAsteroidsGame model.game
+        ]
+
+
+
+-- TERMINAL
 
 
 viewTerminal : Model -> Html Msg
@@ -946,39 +1126,15 @@ viewTerminal model =
             model.terminalCurrentLine
     in
     div []
-        [ div
-            [ style "display" "flex"
-            , style "align-items" "center"
-            , style "justify-content" "space-between"
-            , style "padding" "8px 12px"
-            , style "background" "rgba(168,85,247,0.04)"
-            , style "border" "1px solid rgba(168,85,247,0.1)"
-            , style "border-bottom" "none"
-            ]
-            [ div
-                [ style "font-family" "'Space Mono', monospace"
-                , style "font-size" "12px"
-                , style "color" "rgba(168,85,247,0.7)"
-                , style "letter-spacing" "0.1em"
-                ]
-                [ text "TERMINAL.SH" ]
-            , div
-                [ style "display" "flex"
-                , style "gap" "6px"
-                ]
-                [ div [ style "width" "8px", style "height" "8px", style "border-radius" "50%", style "background" "rgba(168,85,247,0.2)" ] []
-                , div [ style "width" "8px", style "height" "8px", style "border-radius" "50%", style "background" "rgba(168,85,247,0.15)" ] []
-                , div [ style "width" "8px", style "height" "8px", style "border-radius" "50%", style "background" "rgba(168,85,247,0.1)" ] []
-                ]
-            ]
+        [ Theme.viewPanelTitleBar "TERMINAL.SH"
         , div
             [ style "background" "rgba(0,0,0,0.6)"
-            , style "border" "1px solid rgba(168,85,247,0.1)"
+            , style "border" ("1px solid " ++ Theme.purpleA 0.1)
             , style "padding" "16px"
             , style "min-height" "280px"
             , style "max-height" "360px"
             , style "overflow" "hidden"
-            , style "font-family" "'Space Mono', monospace"
+            , style "font-family" Theme.monoFont
             , style "font-size" "13px"
             , style "line-height" "1.7"
             ]
@@ -996,7 +1152,7 @@ viewTerminalLine line =
 
         color =
             if isCommand then
-                "rgba(168,85,247,0.85)"
+                Theme.purpleA 0.85
 
             else
                 "rgba(196,195,200,0.75)"
@@ -1016,7 +1172,7 @@ viewTerminalActiveLine current =
         , style "align-items" "center"
         ]
         [ span
-            [ style "color" "rgba(168,85,247,0.85)"
+            [ style "color" (Theme.purpleA 0.85)
             , style "white-space" "pre-wrap"
             ]
             [ text current ]
@@ -1024,12 +1180,16 @@ viewTerminalActiveLine current =
             [ style "display" "inline-block"
             , style "width" "7px"
             , style "height" "14px"
-            , style "background" "rgba(168,85,247,0.6)"
+            , style "background" (Theme.purpleA 0.6)
             , style "margin-left" "1px"
             , style "animation" "termCursor 1s steps(1) infinite"
             ]
             []
         ]
+
+
+
+-- FOOTER
 
 
 viewFooter : Html Msg
@@ -1042,7 +1202,7 @@ viewFooter =
         , style "z-index" "1"
         ]
         [ div
-            [ style "border-top" "1px solid rgba(168,85,247,0.06)"
+            [ style "border-top" ("1px solid " ++ Theme.purpleA 0.06)
             , style "padding-top" "32px"
             , style "display" "flex"
             , style "justify-content" "space-between"
@@ -1056,44 +1216,34 @@ viewFooter =
                 , style "gap" "20px"
                 ]
                 [ div
-                    [ style "font-family" "'Space Mono', monospace"
+                    [ style "font-family" Theme.monoFont
                     , style "font-size" "12px"
-                    , style "color" "rgba(168,85,247,0.4)"
+                    , style "color" (Theme.purpleA 0.4)
                     , style "letter-spacing" "0.1em"
                     ]
                     [ text "JAW // 2026" ]
-                , a
-                    [ class "social-link"
-                    , href "https://github.com/joaoarthurweber"
-                    , target "_blank"
-                    , style "font-family" "'Space Mono', monospace"
-                    , style "font-size" "12px"
-                    , style "letter-spacing" "0.05em"
-                    ]
-                    [ text "github" ]
-                , a
-                    [ class "social-link"
-                    , href "https://linkedin.com/in/joaoarthurweber"
-                    , target "_blank"
-                    , style "font-family" "'Space Mono', monospace"
-                    , style "font-size" "12px"
-                    , style "letter-spacing" "0.05em"
-                    ]
-                    [ text "linkedin" ]
-                , a
-                    [ class "social-link"
-                    , href "mailto:joaoarthurweber@gmail.com"
-                    , style "font-family" "'Space Mono', monospace"
-                    , style "font-size" "12px"
-                    , style "letter-spacing" "0.05em"
-                    ]
-                    [ text "email" ]
+                , viewFooterLink "github" Theme.githubUrl
+                , viewFooterLink "linkedin" Theme.linkedinUrl
+                , viewFooterLink "email" Theme.emailUrl
                 ]
             , div
-                [ style "font-family" "'Space Mono', monospace"
+                [ style "font-family" Theme.monoFont
                 , style "font-size" "12px"
-                , style "color" "rgba(168,85,247,0.35)"
+                , style "color" (Theme.purpleA 0.35)
                 ]
                 [ text "rendered in elm" ]
             ]
         ]
+
+
+viewFooterLink : String -> String -> Html Msg
+viewFooterLink label url =
+    a
+        [ class "social-link"
+        , href url
+        , target "_blank"
+        , style "font-family" Theme.monoFont
+        , style "font-size" "12px"
+        , style "letter-spacing" "0.05em"
+        ]
+        [ text label ]

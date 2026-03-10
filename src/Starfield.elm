@@ -1,7 +1,8 @@
-module Starfield exposing (Star, BlackHole, GravAcc, starField, blackHoles, viewStarfield)
+module Starfield exposing (Star, BlackHole, GravityEffect, starField, blackHoles, viewStarfield, generateFerrisField)
 
 import Html exposing (Html, div, text)
 import Html.Attributes exposing (src, style)
+import Theme
 
 
 type alias Star =
@@ -12,8 +13,8 @@ type alias BlackHole =
     { x : Float, y : Float, mass : Float, cycleSpeed : Float, phase : Float }
 
 
-type alias GravAcc =
-    { gx : Float, gy : Float, gs : Float, go : Float }
+type alias GravityEffect =
+    { posX : Float, posY : Float, scale : Float, opacity : Float }
 
 
 blackHoles : List BlackHole
@@ -24,63 +25,120 @@ blackHoles =
     ]
 
 
-starField : List Star
-starField =
+type alias StarLayerConfig =
+    { count : Int
+    , indexOffset : Int
+    , hashSeeds : { a : Float, b : Float, c : Float, d : Float, e : Float, f : Float }
+    , depthMin : Float
+    , depthRange : Float
+    , depthMul : Float
+    , sizeMin : Float
+    , sizeRange : Float
+    , sizeMul : Float
+    , brightMin : Float
+    , brightRange : Float
+    , brightMul : Float
+    , seedFactor : Float
+    , seedMix : Float
+    , seedHashIndex : Int
+    }
+
+
+generateStarLayer : StarLayerConfig -> List Star
+generateStarLayer config =
     List.indexedMap
         (\i _ ->
             let
-                fi = toFloat i
-                h1 = frac (fi * 127.1 + 311.7)
-                h2 = frac (fi * 269.5 + 183.3)
-                h3 = frac (fi * 419.2 + 371.9)
+                fi =
+                    toFloat (i + config.indexOffset)
+
+                h1 =
+                    Theme.frac (fi * config.hashSeeds.a + config.hashSeeds.b)
+
+                h2 =
+                    Theme.frac (fi * config.hashSeeds.c + config.hashSeeds.d)
+
+                h3 =
+                    Theme.frac (fi * config.hashSeeds.e + config.hashSeeds.f)
+
+                seedHash =
+                    if config.seedHashIndex == 1 then
+                        h1
+
+                    else if config.seedHashIndex == 2 then
+                        h2
+
+                    else
+                        h3
             in
-            { x = frac (h1 * h2 * 43758.5453) * 100
-            , y = frac (h2 * h3 * 29187.3127) * 100
-            , depth = 0.1 + frac (h3 * 17.31) * 0.15
-            , size = 0.8 + frac (h1 * 3.71) * 0.5
-            , brightness = 0.25 + frac (h2 * 11.37) * 0.25
-            , seed = fi * 2.718 + h1 * 100
+            { x = Theme.frac (h1 * h2 * 43758.5453) * 100
+            , y = Theme.frac (h2 * h3 * 29187.3127) * 100
+            , depth = config.depthMin + Theme.frac (h3 * config.depthMul) * config.depthRange
+            , size = config.sizeMin + Theme.frac (h1 * config.sizeMul) * config.sizeRange
+            , brightness = config.brightMin + Theme.frac (h2 * config.brightMul) * config.brightRange
+            , seed = fi * config.seedFactor + seedHash * config.seedMix
             }
         )
-        (List.range 0 49)
-        ++ List.indexedMap
-            (\i _ ->
-                let
-                    fi = toFloat (i + 100)
-                    h1 = frac (fi * 157.3 + 217.1)
-                    h2 = frac (fi * 337.9 + 113.7)
-                    h3 = frac (fi * 281.5 + 479.3)
-                in
-                { x = frac (h1 * h2 * 43758.5453) * 100
-                , y = frac (h2 * h3 * 29187.3127) * 100
-                , depth = 0.35 + frac (h3 * 13.17) * 0.2
-                , size = 1.0 + frac (h1 * 7.93) * 0.8
-                , brightness = 0.35 + frac (h2 * 5.43) * 0.3
-                , seed = fi * 1.414 + h2 * 80
-                }
-            )
-            (List.range 0 29)
-        ++ List.indexedMap
-            (\i _ ->
-                let
-                    fi = toFloat (i + 200)
-                    h1 = frac (fi * 213.7 + 511.3)
-                    h2 = frac (fi * 179.1 + 389.7)
-                    h3 = frac (fi * 347.3 + 197.1)
-                in
-                { x = frac (h1 * h2 * 43758.5453) * 100
-                , y = frac (h2 * h3 * 29187.3127) * 100
-                , depth = 0.7 + frac (h3 * 9.71) * 0.25
-                , size = 1.8 + frac (h1 * 5.17) * 1.2
-                , brightness = 0.5 + frac (h2 * 7.91) * 0.5
-                , seed = fi * 3.141 + h3 * 60
-                }
-            )
-            (List.range 0 14)
+        (List.range 0 (config.count - 1))
 
 
-viewStarfield : Float -> Html msg
-viewStarfield time =
+starField : List Star
+starField =
+    generateStarLayer
+        { count = 50
+        , indexOffset = 0
+        , hashSeeds = { a = 127.1, b = 311.7, c = 269.5, d = 183.3, e = 419.2, f = 371.9 }
+        , depthMin = 0.1
+        , depthRange = 0.15
+        , depthMul = 17.31
+        , sizeMin = 0.8
+        , sizeRange = 0.5
+        , sizeMul = 3.71
+        , brightMin = 0.25
+        , brightRange = 0.25
+        , brightMul = 11.37
+        , seedFactor = 2.718
+        , seedMix = 100
+        , seedHashIndex = 1
+        }
+        ++ generateStarLayer
+            { count = 30
+            , indexOffset = 100
+            , hashSeeds = { a = 157.3, b = 217.1, c = 337.9, d = 113.7, e = 281.5, f = 479.3 }
+            , depthMin = 0.35
+            , depthRange = 0.2
+            , depthMul = 13.17
+            , sizeMin = 1.0
+            , sizeRange = 0.8
+            , sizeMul = 7.93
+            , brightMin = 0.35
+            , brightRange = 0.3
+            , brightMul = 5.43
+            , seedFactor = 1.414
+            , seedMix = 80
+            , seedHashIndex = 2
+            }
+        ++ generateStarLayer
+            { count = 15
+            , indexOffset = 200
+            , hashSeeds = { a = 213.7, b = 511.3, c = 179.1, d = 389.7, e = 347.3, f = 197.1 }
+            , depthMin = 0.7
+            , depthRange = 0.25
+            , depthMul = 9.71
+            , sizeMin = 1.8
+            , sizeRange = 1.2
+            , sizeMul = 5.17
+            , brightMin = 0.5
+            , brightRange = 0.5
+            , brightMul = 7.91
+            , seedFactor = 3.141
+            , seedMix = 60
+            , seedHashIndex = 3
+            }
+
+
+viewStarfield : Float -> Float -> Html msg
+viewStarfield time seed =
     div
         [ style "position" "fixed"
         , style "top" "0"
@@ -93,7 +151,7 @@ viewStarfield time =
         ]
         (List.map (viewBlackHole time) blackHoles
             ++ List.map (viewStar time) starField
-            ++ List.map (viewFerris time) ferrisField
+            ++ List.map (viewFerris time) (generateFerrisField seed)
         )
 
 
@@ -107,7 +165,7 @@ viewStar time star =
             cos (time / 25000 + star.seed * 0.7) * 4 * star.depth
 
         grav =
-            List.foldl (applyGravity time) { gx = star.x + timeDriftX, gy = star.y + timeDriftY, gs = 1.0, go = 1.0 } blackHoles
+            List.foldl (applyGravity time) { posX = star.x + timeDriftX, posY = star.y + timeDriftY, scale = 1.0, opacity = 1.0 } blackHoles
 
         twinkle =
             let
@@ -118,10 +176,10 @@ viewStar time star =
             0.75 + (t1 * 0.1 + t2 * 0.08 + t3 * 0.07)
 
         finalOpacity =
-            star.brightness * twinkle * grav.go
+            star.brightness * twinkle * grav.opacity
 
         finalSize =
-            star.size * grav.gs
+            star.size * grav.scale
 
         glowRadius =
             if star.depth > 0.6 then
@@ -136,8 +194,8 @@ viewStar time star =
     else
         div
             [ style "position" "absolute"
-            , style "left" (String.fromFloat grav.gx ++ "%")
-            , style "top" (String.fromFloat grav.gy ++ "%")
+            , style "left" (String.fromFloat grav.posX ++ "%")
+            , style "top" (String.fromFloat grav.posY ++ "%")
             , style "width" (String.fromFloat finalSize ++ "px")
             , style "height" (String.fromFloat finalSize ++ "px")
             , style "border-radius" "50%"
@@ -145,7 +203,7 @@ viewStar time star =
             , style "opacity" (String.fromFloat finalOpacity)
             , style "box-shadow"
                 (if glowRadius > 0 then
-                    "0 0 " ++ String.fromFloat glowRadius ++ "px rgba(168,85,247,0.3)"
+                    "0 0 " ++ String.fromFloat glowRadius ++ "px " ++ Theme.purpleA 0.3
 
                  else
                     "none"
@@ -155,46 +213,69 @@ viewStar time star =
             []
 
 
-applyGravity : Float -> BlackHole -> GravAcc -> GravAcc
-applyGravity time bh acc =
+blackHoleCycleActivity : Float -> Float
+blackHoleCycleActivity cycleT =
+    if cycleT < 0.15 then
+        0
+
+    else if cycleT < 0.4 then
+        (cycleT - 0.15) / 0.25
+
+    else if cycleT < 0.6 then
+        1.0
+
+    else if cycleT < 0.75 then
+        -(1.0 - (cycleT - 0.6) / 0.15)
+
+    else
+        -(1.0 - (cycleT - 0.75) / 0.25) * 0.3
+
+
+blackHoleCoreVisibility : Float -> Float
+blackHoleCoreVisibility cycleT =
+    if cycleT < 0.15 then
+        0
+
+    else if cycleT < 0.4 then
+        (cycleT - 0.15) / 0.25
+
+    else if cycleT < 0.6 then
+        1.0
+
+    else if cycleT < 0.75 then
+        1.0 - (cycleT - 0.6) / 0.15
+
+    else
+        0
+
+
+applyGravity : Float -> BlackHole -> GravityEffect -> GravityEffect
+applyGravity time blackHole acc =
     let
         sx =
-            acc.gx
+            acc.posX
 
         sy =
-            acc.gy
+            acc.posY
 
         cycleT =
-            frac ((time + bh.phase) / bh.cycleSpeed)
+            Theme.frac ((time + blackHole.phase) / blackHole.cycleSpeed)
 
         activity =
-            if cycleT < 0.15 then
-                0
-
-            else if cycleT < 0.4 then
-                (cycleT - 0.15) / 0.25
-
-            else if cycleT < 0.6 then
-                1.0
-
-            else if cycleT < 0.75 then
-                -(1.0 - (cycleT - 0.6) / 0.15)
-
-            else
-                -(1.0 - (cycleT - 0.75) / 0.25) * 0.3
+            blackHoleCycleActivity cycleT
 
         dx =
-            sx - bh.x
+            sx - blackHole.x
 
         dy =
-            sy - bh.y
+            sy - blackHole.y
 
         dist =
             sqrt (dx * dx + dy * dy)
 
         influence =
-            if dist < bh.mass then
-                (1 - dist / bh.mass) ^ 2
+            if dist < blackHole.mass then
+                (1 - dist / blackHole.mass) ^ 2
 
             else
                 0
@@ -207,14 +288,14 @@ applyGravity time bh acc =
                 0
 
             else
-                dx / dist * pullStrength * bh.mass * 0.6
+                dx / dist * pullStrength * blackHole.mass * 0.6
 
         pullY =
             if dist < 0.01 then
                 0
 
             else
-                dy / dist * pullStrength * bh.mass * 0.6
+                dy / dist * pullStrength * blackHole.mass * 0.6
 
         spiralAngle =
             if pullStrength > 0 then
@@ -246,37 +327,24 @@ applyGravity time bh acc =
             else
                 1.0
     in
-    { gx = sx - (pullX * cosA - pullY * sinA)
-    , gy = sy - (pullX * sinA + pullY * cosA)
-    , gs = acc.gs * scaleEffect
-    , go = acc.go * opacityEffect
+    { posX = sx - (pullX * cosA - pullY * sinA)
+    , posY = sy - (pullX * sinA + pullY * cosA)
+    , scale = acc.scale * scaleEffect
+    , opacity = acc.opacity * opacityEffect
     }
 
 
 viewBlackHole : Float -> BlackHole -> Html msg
-viewBlackHole time bh =
+viewBlackHole time blackHole =
     let
         cycleT =
-            frac ((time + bh.phase) / bh.cycleSpeed)
+            Theme.frac ((time + blackHole.phase) / blackHole.cycleSpeed)
 
         coreVisibility =
-            if cycleT < 0.15 then
-                0
-
-            else if cycleT < 0.4 then
-                (cycleT - 0.15) / 0.25
-
-            else if cycleT < 0.6 then
-                1.0
-
-            else if cycleT < 0.75 then
-                1.0 - (cycleT - 0.6) / 0.15
-
-            else
-                0
+            blackHoleCoreVisibility cycleT
 
         diskSize =
-            bh.mass * 0.8 * coreVisibility
+            blackHole.mass * 0.8 * coreVisibility
 
         coreGlow =
             coreVisibility * 0.6
@@ -292,14 +360,14 @@ viewBlackHole time bh =
         [ if diskSize > 0.5 then
             div
                 [ style "position" "absolute"
-                , style "left" ("calc(" ++ String.fromFloat bh.x ++ "% - " ++ String.fromFloat (diskSize * 2) ++ "px)")
-                , style "top" ("calc(" ++ String.fromFloat bh.y ++ "% - " ++ String.fromFloat (diskSize * 0.6) ++ "px)")
+                , style "left" ("calc(" ++ String.fromFloat blackHole.x ++ "% - " ++ String.fromFloat (diskSize * 2) ++ "px)")
+                , style "top" ("calc(" ++ String.fromFloat blackHole.y ++ "% - " ++ String.fromFloat (diskSize * 0.6) ++ "px)")
                 , style "width" (String.fromFloat (diskSize * 4) ++ "px")
                 , style "height" (String.fromFloat (diskSize * 1.2) ++ "px")
                 , style "border-radius" "50%"
-                , style "border" ("1px solid rgba(168,85,247," ++ String.fromFloat (coreVisibility * 0.3) ++ ")")
+                , style "border" ("1px solid " ++ Theme.purpleA (coreVisibility * 0.3))
                 , style "box-shadow"
-                    ("0 0 " ++ String.fromFloat (diskSize * 0.5) ++ "px rgba(168,85,247," ++ String.fromFloat (coreVisibility * 0.15) ++ ")")
+                    ("0 0 " ++ String.fromFloat (diskSize * 0.5) ++ "px " ++ Theme.purpleA (coreVisibility * 0.15))
                 , style "animation" "accrete 4s linear infinite"
                 , style "opacity" (String.fromFloat coreVisibility)
                 ]
@@ -310,14 +378,14 @@ viewBlackHole time bh =
         , if coreGlow > 0.01 then
             div
                 [ style "position" "absolute"
-                , style "left" ("calc(" ++ String.fromFloat bh.x ++ "% - 6px)")
-                , style "top" ("calc(" ++ String.fromFloat bh.y ++ "% - 6px)")
+                , style "left" ("calc(" ++ String.fromFloat blackHole.x ++ "% - 6px)")
+                , style "top" ("calc(" ++ String.fromFloat blackHole.y ++ "% - 6px)")
                 , style "width" "12px"
                 , style "height" "12px"
                 , style "border-radius" "50%"
-                , style "background" "radial-gradient(circle, #020005 40%, rgba(168,85,247,0.3) 70%, transparent 100%)"
+                , style "background" ("radial-gradient(circle, #020005 40%, " ++ Theme.purpleA 0.3 ++ " 70%, transparent 100%)")
                 , style "box-shadow"
-                    ("0 0 20px rgba(168,85,247," ++ String.fromFloat (coreGlow * 0.4) ++ "), 0 0 40px rgba(100,50,200," ++ String.fromFloat (coreGlow * 0.2) ++ ")")
+                    ("0 0 20px " ++ Theme.purpleA (coreGlow * 0.4) ++ ", 0 0 40px rgba(100,50,200," ++ String.fromFloat (coreGlow * 0.2) ++ ")")
                 , style "opacity" (String.fromFloat coreGlow)
                 ]
                 []
@@ -327,12 +395,12 @@ viewBlackHole time bh =
         , if flashOpacity > 0.01 then
             div
                 [ style "position" "absolute"
-                , style "left" ("calc(" ++ String.fromFloat bh.x ++ "% - 40px)")
-                , style "top" ("calc(" ++ String.fromFloat bh.y ++ "% - 40px)")
+                , style "left" ("calc(" ++ String.fromFloat blackHole.x ++ "% - 40px)")
+                , style "top" ("calc(" ++ String.fromFloat blackHole.y ++ "% - 40px)")
                 , style "width" "80px"
                 , style "height" "80px"
                 , style "border-radius" "50%"
-                , style "background" "radial-gradient(circle, rgba(200,170,255,0.8) 0%, rgba(168,85,247,0.3) 30%, transparent 70%)"
+                , style "background" ("radial-gradient(circle, rgba(200,170,255,0.8) 0%, " ++ Theme.purpleA 0.3 ++ " 30%, transparent 70%)")
                 , style "opacity" (String.fromFloat flashOpacity)
                 ]
                 []
@@ -346,32 +414,32 @@ type alias Ferris =
     { x : Float, y : Float, rotation : Float, size : Float, opacity : Float, seed : Float }
 
 
-ferrisField : List Ferris
-ferrisField =
+generateFerrisField : Float -> List Ferris
+generateFerrisField seed =
     List.indexedMap
         (\i _ ->
             let
                 fi =
-                    toFloat (i + 500)
+                    toFloat (i + 500) * (seed * 99991 + 1)
 
                 h1 =
-                    frac (fi * 173.7 + 491.3)
+                    Theme.frac (fi * 173.7 + 491.3)
 
                 h2 =
-                    frac (fi * 311.1 + 257.9)
+                    Theme.frac (fi * 311.1 + 257.9)
 
                 h3 =
-                    frac (fi * 523.7 + 139.1)
+                    Theme.frac (fi * 523.7 + 139.1)
             in
-            { x = frac (h1 * h2 * 43758.5453) * 100
-            , y = frac (h2 * h3 * 29187.3127) * 100
-            , rotation = frac (h3 * h1 * 17593.1) * 360
-            , size = 35 + frac (h1 * 7.31) * 25
-            , opacity = 0.12 + frac (h2 * 3.91) * 0.1
+            { x = Theme.frac (h1 * h2 * 43758.5453) * 100
+            , y = Theme.frac (h2 * h3 * 29187.3127) * 100
+            , rotation = Theme.frac (h3 * h1 * 17593.1) * 360
+            , size = 35 + Theme.frac (h1 * 7.31) * 25
+            , opacity = 0.12 + Theme.frac (h2 * 3.91) * 0.1
             , seed = fi * 1.618 + h3 * 50
             }
         )
-        (List.range 0 9)
+        (List.range 0 19)
 
 
 viewFerris : Float -> Ferris -> Html msg
@@ -412,9 +480,9 @@ viewFerris time ferris =
             , style "width" "80%"
             , style "height" "140%"
             , style "border-radius" "50%"
-            , style "background" "rgba(168,85,247,0.04)"
-            , style "border" "1px solid rgba(168,85,247,0.15)"
-            , style "box-shadow" "0 0 8px rgba(168,85,247,0.1)"
+            , style "background" (Theme.purpleA 0.04)
+            , style "border" ("1px solid " ++ Theme.purpleA 0.15)
+            , style "box-shadow" ("0 0 8px " ++ Theme.purpleA 0.1)
             ]
             []
 
@@ -435,7 +503,7 @@ viewFerris time ferris =
             , style "right" "28%"
             , style "width" "2px"
             , style "height" "18%"
-            , style "background" "rgba(168,85,247,0.4)"
+            , style "background" (Theme.purpleA 0.4)
             , style "transform" "rotate(-15deg)"
             , style "transform-origin" "bottom center"
             ]
@@ -446,13 +514,8 @@ viewFerris time ferris =
                 , style "width" "8px"
                 , style "height" "8px"
                 , style "border-radius" "50%"
-                , style "background" "rgba(168,85,247,0.35)"
+                , style "background" (Theme.purpleA 0.35)
                 ]
                 []
             ]
         ]
-
-
-frac : Float -> Float
-frac f =
-    f - toFloat (floor f)

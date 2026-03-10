@@ -1,26 +1,44 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE HTML>
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JAW</title>
-    <style>
-        html, body { margin: 0; padding: 0; background: #000; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Main</title>
+  <style>body { padding: 0; margin: 0; }</style>
 </head>
-<body>
-    <script src="sand.js"></script>
-    <script src="elm.js"></script>
-    <script>
-        Elm.Main.init();
-        SandSim.start();
 
-        // Prevent space from scrolling the page (game uses space to shoot)
-        document.addEventListener("keydown", function (e) {
-            if (e.key === " " && document.activeElement === document.body) {
-                e.preventDefault();
-            }
-        });
-    </script>
+<body>
+
+<pre id="elm"></pre>
+
+<script src="elm.js"></script>
+<script src="sand.js"></script>
+<script>
+try {
+  var app = Elm.Main.init({ node: document.getElementById("elm"), flags: Math.random() });
+  if (window.SandSim) { window.SandSim.start(); }
+
+  // Prevent page scroll when playing Asteroids
+  var gameFocused = false;
+  var gameKeys = {ArrowUp:1, ArrowDown:1, ArrowLeft:1, ArrowRight:1, " ":1, w:1, a:1, s:1, d:1};
+  document.addEventListener("click", function(e) {
+    var panel = document.getElementById("asteroids-panel");
+    gameFocused = panel && panel.contains(e.target);
+  }, true);
+  document.addEventListener("keydown", function(e) {
+    if (gameFocused && gameKeys[e.key]) { e.preventDefault(); }
+  });
+}
+catch (e)
+{
+  var header = document.createElement("h1");
+  header.style.fontFamily = "monospace";
+  header.innerText = "Initialization Error";
+  var pre = document.getElementById("elm");
+  document.body.insertBefore(header, pre);
+  pre.innerText = e;
+  throw e;
+}
+</script>
+
 </body>
 </html>
